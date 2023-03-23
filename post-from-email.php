@@ -1,16 +1,15 @@
 <?php
 /**
- * Post from Email Blast
+ * Post from Email
  *
  * @package       post-from-email
  * @author        Ollie Jones
  * @license       gplv2
- * @version       1.0.5
  *
  * @wordpress-plugin
- * Plugin Name:   Post from Email Blast
+ * Plugin Name:   Post from Email
  * Plugin URI:    https://github.com/OllieJones/post-from-email
- * Description:   Creates WordPress posts from email messages.
+ * Description:   Create WordPress posts from email messages.
  * Version:       1.0.0
  * Author:        Ollie Jones
  * Author URI:    https://github.com/OllieJones
@@ -20,7 +19,7 @@
  * License URI:   https://www.gnu.org/licenses/gpl-2.0.html
  *
  * You should have received a copy of the GNU General Public License
- * along with Post from Email Blast. If not, see <https://www.gnu.org/licenses/gpl-2.0.html/>.
+ * along with Post from Email. If not, see <https://www.gnu.org/licenses/gpl-2.0.html/>.
  */
 
 // Exit if accessed directly.
