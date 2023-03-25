@@ -32,7 +32,7 @@ Content-Type: application/json
     "x_ctct_id": "f8854dc6-c5e0-11ed-abc9-fa163e928ecf"
   },
   "envelope": {
-    "to": "c5eace4f0ba92e91d878@cloudmailin.net",
+    "to": "c5eace4f0ba92e91d878+bar|baz|foo@cloudmailin.net",
     "recipients": [
       "c5eace4f0ba92e91d878@cloudmailin.net"
     ],

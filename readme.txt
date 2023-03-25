@@ -7,7 +7,7 @@ Tags: private
 Requires at least: 5.9
 Tested up to: 6.2
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 0.2.1
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,5 +39,8 @@ You can use the [CloudMailin](https://cloudmailin.com/) service to create a spec
 
 == Changelog ==
 
-= 1.0.0: March 20, 2023 =
+= 0.2.1: March 25, 2023
+Add setting of categories from email+category|category|category@example.com on the To addess.
+
+= 0.1.0: March 20, 2023 =
 * Birthday of Post from Email Address

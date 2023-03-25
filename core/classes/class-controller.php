@@ -25,16 +25,13 @@ namespace Post_From_Email {
      * @return \WP_REST_Response|\WP_Error
      */
     public function post( \WP_REST_Request $req ) {
-      error_log( 'entered post method' );
       require_once ABSPATH . 'wp-admin/includes/admin.php';
       $timestamp = time();
       $upload    = $req->get_json_params();
 
-      $uploadCategoryId = $this->maybeMakeCategory( 'Email',
-        'From Email',
-        'from_email' );
+      $categories = array();
+      $tags       = array();
 
-      $tags  = [];
       $valid = is_array( $upload )
                && array_key_exists( 'headers', $upload )
                && array_key_exists( 'envelope', $upload )
@@ -42,6 +39,14 @@ namespace Post_From_Email {
       if ( ! $valid ) {
         return $this->error( 'Invalid object' );
       }
+
+      if ( array_key_exists( 'to', $upload['envelope'] ) ) {
+        foreach ( $this->get_properties_from_email( $upload['envelope']['to'] ) as $category ) {
+          $categories [] = $this->maybe_insert_category( $category, $category, $category );
+        }
+      }
+      $categories [] = $this->maybe_insert_category( 'Email', 'Post From Email', 'post-from-email' );
+
       try {
         $doc = new \DOMDocument( '1.0', 'utf-8' );
 
@@ -82,7 +87,7 @@ namespace Post_From_Email {
           'post_content'   => implode( '', $content ),
           'post_title'     => $title,
           'post_status'    => 'private',   //TODO
-          'post_category'  => [ $uploadCategoryId ],
+          'post_category'  => $categories,
           'comment_status' => 'closed',
           'ping_status'    => 'closed',
           'tags_input'     => $tags,
@@ -125,7 +130,7 @@ namespace Post_From_Email {
     /**
      * @return int|mixed|string|string[]|\WP_Error|null
      */
-    private function maybeMakeCategory( $category, $description, $nicename ) {
+    private function maybe_insert_category( $category, $description, $nicename ) {
       $uploadCategoryId = term_exists( $category );
       if ( ! $uploadCategoryId ) {
         $uploadCategoryId = wp_insert_category( [
@@ -145,7 +150,8 @@ namespace Post_From_Email {
      */
     private function error( $message ) {
       status_header( 400 );
-      return new \WP_Error(400, $message );
+
+      return new \WP_Error( 400, $message );
     }
 
     /**
@@ -170,6 +176,30 @@ namespace Post_From_Email {
       }
 
       return $result;
+    }
+
+    /**
+     * See if the mail was sent to address+category|category|category@example.com .
+     *
+     * @param string $to Email address.
+     *
+     * @return \Generator
+     */
+
+    private function get_properties_from_email( $to ) {
+
+      $splits = explode( '@', $to, 2 );
+      $to     = $splits[0];
+      $splits = explode( '+', $to, 2 );
+      if ( 2 === count( $splits ) && strlen( $splits[1] ) > 0 ) {
+        $categories = $splits[1];
+        $categories = explode( '|', $categories );
+        foreach ( $categories as $category ) {
+          if ( strlen( $category ) > 0 ) {
+            yield $category;
+          }
+        }
+      }
     }
 
     /**

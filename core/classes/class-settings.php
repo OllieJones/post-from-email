@@ -34,7 +34,6 @@ namespace Post_From_Email {
 	 * @package    POST_FROM_EMAIL
 	 * @subpackage  Classes/Post_From_Email_Settings
 	 * @author    Ollie Jones
-	 * @since    1.0.0
 	 */
 	class Settings {
 
@@ -42,7 +41,6 @@ namespace Post_From_Email {
 		 * The plugin name
 		 *
 		 * @var    string
-		 * @since   1.0.0
 		 */
 		private $plugin_name;
 
@@ -50,7 +48,6 @@ namespace Post_From_Email {
 		 * Our Post_From_Email_Settings constructor
 		 * to run the plugin logic.
 		 *
-		 * @since 1.0.0
 		 */
 		function __construct() {
 
@@ -63,7 +60,6 @@ namespace Post_From_Email {
 		 *
 		 * @access  public
 		 * @return  string The plugin name
-		 * @since  1.0.0
 		 */
 		public function get_plugin_name() {
 			return apply_filters( 'POST_FROM_EMAIL/settings/get_plugin_name', $this->plugin_name );

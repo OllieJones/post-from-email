@@ -14,7 +14,6 @@ namespace Post_From_Email {
    * @package    POST_FROM_EMAIL
    * @subpackage  Classes/Post_From_Email_Run
    * @author    Ollie Jones
-   * @since    1.0.0
    */
   class Run {
 
@@ -24,12 +23,12 @@ namespace Post_From_Email {
      * Our Post_From_Email_Run constructor
      * to run the plugin logic.
      *
-     * @since 1.0.0
      */
     function __construct() {
       $this->add_hooks();
       if ( WP_DEBUG ) {
-        $this->timeout = DAY_IN_SECONDS; // TODO this can be longer.
+        /* override the two-week default when debugging */
+        $this->timeout = MINUTE_IN_SECONDS * 10;
       }
     }
 
@@ -89,7 +88,6 @@ namespace Post_From_Email {
      *
      * @access  private
      * @return  void
-     * @since  1.0.0
      */
     private function add_hooks() {
 
@@ -142,7 +140,7 @@ namespace Post_From_Email {
      * @throws \DOMException
      */
     private function load_doc_to_file( $url, $name ): string {
-      $doc = new \DOMDocument (1.0, 'utf=8' );
+      $doc = new \DOMDocument ( 1.0, 'utf-8' );
 
       $doc->preserveWhiteSpace = false;
       @$doc->loadHTMLFile( $url );
@@ -150,7 +148,9 @@ namespace Post_From_Email {
       $this->annotate_doc( $doc );
       $dirs    = wp_upload_dir();
       $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
-      @mkdir( $dirname );
+      if ( ! @file_exists( $dirname ) ) {
+        @mkdir( $dirname );
+      }
       $pathname = $dirname . DIRECTORY_SEPARATOR . $name;
       $doc->saveHTMLFile( $pathname );
       $pathname = $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
@@ -162,7 +162,7 @@ namespace Post_From_Email {
      * @throws \DOMException
      */
     private function load_meta_to_file( $atts, $name ): string {
-      $doc = new \DOMDocument (1.0, 'utf-8)');
+      $doc = new \DOMDocument ( 1.0, 'utf-8)' );
 
       $doc->preserveWhiteSpace = false;
       @$doc->loadHTML( get_post_meta( get_the_ID(), $atts['meta_tag'], true ) );
@@ -171,12 +171,13 @@ namespace Post_From_Email {
       $this->annotate_doc( $doc );
       $dirs    = wp_upload_dir();
       $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
-      @mkdir( $dirname );
+      if ( ! @file_exists( $dirname ) ) {
+        @mkdir( $dirname );
+      }
       $pathname = $dirname . DIRECTORY_SEPARATOR . $name;
       $doc->saveHTMLFile( $pathname );
-      $pathname = $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
 
-      return $pathname;
+      return $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
     }
 
     /**
@@ -217,6 +218,13 @@ namespace Post_From_Email {
         $els = $xpath->query( "//table[@class='footer-container']", $body );
         foreach ( $els as $el ) {
           $el->parentNode->removeChild( $el );
+        }
+        /* Scrub out 1x1 images (tracking pixels */
+        $pixels = $xpath->query( "//img[@width='1']", $body );
+        foreach ( $pixels as $pixel ) {
+          if ( 1 == $pixel->getAttribute( 'width' ) && 1 == $pixel->getAttribute( 'height' ) ) {
+            $pixel->parentNode->removeChild( $pixel );
+          }
         }
       }
 

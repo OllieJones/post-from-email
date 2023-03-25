@@ -14,7 +14,6 @@ namespace Post_From_Email {
      *
      * @package    POST_FROM_EMAIL
      * @subpackage  Classes/Post_From_Email
-     * @since    1.0.0
      * @author    Ollie Jones
      */
     final class Main {
@@ -24,7 +23,6 @@ namespace Post_From_Email {
        * The real instance
        *
        * @access  private
-       * @since  1.0.0
        * @var    object|Main
        */
       private static $instance;
@@ -33,7 +31,6 @@ namespace Post_From_Email {
        * Settings object.
        *
        * @access  public
-       * @since  1.0.0
        * @var    object|Settings
        */
       public $settings;
@@ -47,7 +44,6 @@ namespace Post_From_Email {
        *
        * @access    public
        * @return    object|Main  The one true Post_From_Email
-       * @since    1.0.0
        * @static
        */
       public static function instance() {
@@ -76,6 +72,11 @@ namespace Post_From_Email {
         return self::$instance;
       }
 
+      /**
+       * Configure the hooks.
+       *
+       * @return void
+       */
       private function base_hooks() {
         add_action( 'plugins_loaded', [ self::$instance, 'load_textdomain' ] );
         /* handle cron cache cleanup */
@@ -90,7 +91,6 @@ namespace Post_From_Email {
        *
        * @access  public
        * @return  void
-       * @since   1.0.0
        */
       public function load_textdomain() {
         load_plugin_textdomain( 'post-from-email', false, dirname( plugin_basename( POST_FROM_EMAIL_PLUGIN_FILE ) ) . '/languages/' );
@@ -107,7 +107,9 @@ namespace Post_From_Email {
       public function clean () {
         $dirs    = wp_upload_dir();
         $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
-        @mkdir( $dirname );
+        if ( ! @file_exists( $dirname ) ) {
+          @mkdir( $dirname );
+        }
         $files = scandir ( $dirname );
         foreach ($files as $file) {
           if (is_string ($file) && str_ends_with ($file, '.html') ) {
