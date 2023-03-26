@@ -17,6 +17,8 @@ namespace Post_From_Email {
    */
   class Run {
 
+    static $scrub_list;
+
     private $timeout = WEEK_IN_SECONDS * 2;
 
     /**
@@ -30,6 +32,14 @@ namespace Post_From_Email {
         /* override the two-week default when debugging */
         $this->timeout = MINUTE_IN_SECONDS * 10;
       }
+
+      self::$scrub_list = array(
+        "/html/head/meta[@property='og:image']",
+        '/html/head/script',
+        "/html/body//div[@id='tracking-image']",
+        "/html/body//table[@class='footer-container']",
+        "/html/body//img[@width='1'][@height='1']",
+      );
     }
 
     /** Generate
@@ -187,48 +197,26 @@ namespace Post_From_Email {
      *
      * @return void
      */
-    private function clean_doc( \DOMDocument &$doc ) {
+    private function clean_doc( \DOMDocument &$doc, $scrub_list = null ) {
+      if ( null == $scrub_list ) {
+        $scrub_list = self::$scrub_list;
+      }
       $xpath = new \DOMXPath( $doc );
-      $metas = $xpath->query( '/html/head/meta' );
+      foreach ( $scrub_list as $scrub ) {
+        try {
+          $els = @$xpath->query( $scrub );
 
-      /* Get rid of the fb opengraph og:image items. There are many and they are long. */
-      foreach ( $metas as $meta ) {
-        $property = $meta->getAttribute( 'property' );
-        if ( 'og:image' === $property ) {
-          $meta->parentNode->removeChild( $meta );
-        }
-      }
-
-      /* scrub out the scripts in the header, mostly surveillance. */
-      $scripts = $xpath->query( '/html/head/script' );
-      foreach ( $scripts as $script ) {
-        $script->parentNode->removeChild( $script );
-      }
-      $bodies = $xpath->query( '/html/body' );
-      foreach ( $bodies as $body ) {
-        /* Get rid of the surveillance pixel. */
-        $els = $xpath->query( "div[@id='tracking-image']", $body );
-        foreach ( $els as $el ) {
-          $el->parentNode->removeChild( $el );
-        }
-
-        /* Get rid of the Constant Contact footer; we don't want anybody to
-         * unsubscribe from the web page.
-         */
-        $els = $xpath->query( "//table[@class='footer-container']", $body );
-        foreach ( $els as $el ) {
-          $el->parentNode->removeChild( $el );
-        }
-        /* Scrub out 1x1 images (tracking pixels */
-        $pixels = $xpath->query( "//img[@width='1']", $body );
-        foreach ( $pixels as $pixel ) {
-          if ( 1 == $pixel->getAttribute( 'width' ) && 1 == $pixel->getAttribute( 'height' ) ) {
-            $pixel->parentNode->removeChild( $pixel );
+          if ( false === $els ) {
+            error_log( 'Error in xpath expression ' . $scrub );
+          } else {
+            foreach ( $els as $el ) {
+              $el->parentNode->removeChild( $el );
+            }
           }
+        } catch ( \Exception $ex ) {
+          error_log( 'Error in xpath expression ' . $scrub );
         }
       }
-
-      return;
     }
 
     /**
