@@ -62,7 +62,13 @@ namespace Post_From_Email {
 	        //Fire the plugin logic
 	        new Run();
 
-	        /**
+          /* TODO testing popping */
+          require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
+          $popper = new Pop_Email();
+          foreach ( $popper->fetch_all() as $message) {
+            $foo = $message;
+          }
+          /**
 	         * Fire a custom action to allow dependencies
 	         * after the successful plugin setup
 	         */
