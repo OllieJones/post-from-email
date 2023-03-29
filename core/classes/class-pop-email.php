@@ -1,6 +1,7 @@
 <?php
 
 namespace Post_From_Email {
+
   use Generator;
 
 // Exit if accessed directly.
@@ -19,21 +20,144 @@ namespace Post_From_Email {
    */
   class Pop_Email {
     static $default_credentials;
+    static $template_credentials;
     public $connection;
     public $credentials;
 
     public function __construct() {
-      self::$default_credentials = array(
+      self::$default_credentials  = array(
         'type'        => 'pop',
-        'host'        => 'REDACTED.net',
+        'address'     => 'post-from-email@plumislandmedia.net',
+        'host'        => 'mail.plumislandmedia.net',
         'port'        => 995,
-        'user'        => 'post-from-email@REDACTED.net',
-        'pass'        => 'REDACTED',
+        'user'        => 'post-from-email@plumislandmedia.net',
+        'pass'        => 'REDACTED',  //TODO
         'ssl'         => true,
+        'dkim'        => true,
+        'allowlist'   => "happy@example.com\ntrusted@example.com",
         'folder'      => 'INBOX',
         'disposition' => 'save', // TODO debugging. In production should be 'delete' or missing entirely.
         'debug'       => true,   // TODO debugging. In production should be false or missing entirely.
       );
+      self::$template_credentials = array(
+        'type'        => 'pop',
+        'address'     => 'user@example.com',
+        'host'        => 'mail.example.com',
+        'port'        => 995,
+        'user'        => 'user@mail.example.com',
+        'pass'        => 'secret',
+        'ssl'         => true,
+        'dkim'        => true,
+        'allowlist'   => "happy@example.com\ntrusted@example.com",
+        'folder'      => 'INBOX',
+        'disposition' => 'delete', // TODO debugging. In production should be 'delete' or missing entirely.
+        'debug'       => false,   // TODO debugging. In production should be false or missing entirely.
+      );
+    }
+
+    /**
+     * Sanitize a hostname.
+     *
+     * @param string $hostname A hostname (fully-qualified domain name).
+     *
+     * @return string|null The same hostname, or null if it contains invalid characters.
+     */
+    public static function sanitize_hostname( $hostname ) {
+      $splits = explode( '.', $hostname );
+      $result = array();
+      foreach ( $splits as $split ) {
+        if ( preg_match( '/^[a-z0-9][-a-z0-9]*[a-z0-9]?$/', $split ) ) {
+          $result [] = $split;
+        } else {
+          return null;
+        }
+      }
+
+      return implode( '.', $result );
+    }
+
+    /**
+     * Sanitize a username.
+     *
+     * @param string $username A username
+     *
+     * @return string The same username, or '' if it contains invalid characters.
+     */
+    public static function sanitize_username( $username ) {
+      if ( false == strpos( $username, '@' ) ) {
+        if ( preg_match( '/^[a-zA-Z0-9][-.a-zA-Z0-9]*[a-zA-Z0-9]?/', $username ) ) {
+          return $username;
+        }
+      } else {
+        return sanitize_email( $username );
+      }
+
+      return '';
+    }
+
+    public static function sanitize_credentials( $credentials ) {
+
+      $credentials['host'] = self::sanitize_hostname( $credentials['host'] );
+      $credentials['port'] = intval( $credentials['port'] );
+
+      $credentials['address'] = sanitize_email( $credentials['address'] );
+      $credentials['user']    = self::sanitize_username( $credentials ['user'] );
+      /* Coerce mixed to boolean. */
+      $credentials['ssl']  = ! ! $credentials['ssl'];
+      $credentials['dkim'] = ! ! $credentials['dkim'];
+
+      $credentials['allowlist'] = self::sanitize_email_list( $credentials['allowlist'] );
+
+      $allowed_ports = self::get_possible_ports( $credentials );
+      if ( ! in_array( $credentials['port'], $allowed_ports, true ) ) {
+        $credentials['port'] = 0;
+      }
+      if ( ! is_string( $credentials['folder'] ) || strlen( $credentials['folder'] ) <= 0 ) {
+        $credentials['folder'] = 'INBOX';
+      }
+
+      return $credentials;
+    }
+
+    /**
+     * Sanitize a list of email addresses, one per line delimited by newlines.
+     *
+     * @param string $list The list.
+     *
+     * @return string The sanitized list.
+     */
+    public static function sanitize_email_list( $list ) {
+      $result = array();
+      $list   = is_string( $list ) ? $list : '';
+      $list   = str_replace( "\n\r", "\n", $list );
+      $list   = str_replace( "\r\n", "\n", $list );
+      $list   = str_replace( "\r", "\n", $list );
+      $lines  = explode( "\n", $list );
+      foreach ( $lines as $line ) {
+        if ( strlen( $line ) > 0 ) {
+          $clean = sanitize_email( $line );
+          if ( strlen( $clean ) > 0 ) {
+            $result [] = $clean;
+          }
+        }
+      }
+
+      return implode( "\n", $result );
+    }
+
+    /**
+     * Retrieve the possible ports for a connection.
+     *
+     * @param array $credentials Credentials array.
+     *
+     * @return int[]|null The list of allowed ports.
+     */
+    public static function get_possible_ports( $credentials ) {
+      if ( 'pop' === $credentials['type'] ) {
+        return array( 110, 143, 993, 995, 1110, 2221 );
+      }
+
+      return null;
     }
 
     /**
@@ -64,13 +188,13 @@ namespace Post_From_Email {
 
         $result = imap_errors();
         if ( $result ) {
-          if ($this->connection) {
+          if ( $this->connection ) {
             /* Unknown whether this code path is necessary */
             array_unshift( $result, 'Error opening ' . $mailbox );
           } else {
             array_unshift( $result, 'Cannot open ' . $mailbox );
           }
-          $result = implode( PHP_EOL, array_reverse ( $result ) );
+          $result = implode( PHP_EOL, array_reverse( $result ) );
         } else {
           $result = true;
         }
@@ -191,7 +315,7 @@ namespace Post_From_Email {
     /**
      * Traverse the parts of the message, returning each one in an array.
      *
-     * @param int $message_num The message number.
+     * @param int    $message_num The message number.
      * @param object $part Element of the array returned by imap_fetch_overview.
      * @param string $prefix Message part number prefix, a string with dot-separated integers according to the IMAP specification.
      *
@@ -216,7 +340,7 @@ namespace Post_From_Email {
     /**
      * Decode a message part.
      *
-     * @param int $message_num The message number.
+     * @param int    $message_num The message number.
      * @param object $part Element of the array returned by imap_fetch_overview.
      * @param string $section Message part number, a string with dot-separated integers according to the IMAP specification.
      *

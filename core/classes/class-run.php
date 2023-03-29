@@ -48,7 +48,7 @@ namespace Post_From_Email {
      *
      * @return string the date string we generate. It must end with a space for correct formatting.
      */
-    public function post_date_and_time( string $date ): string {
+    public function post_date_and_time( string $date ) {
 
       $isodate  = esc_attr( get_the_date( 'c' ) );
       $textdate = esc_html( get_the_date() . ' ' . get_the_time() );
@@ -70,7 +70,7 @@ namespace Post_From_Email {
      *
      * @return string Shortcode output.
      */
-    public function embed( array $atts = [], string $content = null, string $tag = '' ): string {
+    public function embed( array $atts = [], $content = null, $tag = '' ) {
 
       wp_enqueue_style( 'post-from-email',
         POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/post-from-email.css',
@@ -113,7 +113,7 @@ namespace Post_From_Email {
      *
      * @return string
      */
-    private function get_filename( $url ): string {
+    private function get_filename( $url ) {
       if ( str_starts_with( $url, 'f-' ) && str_ends_with( $url, '.html' ) ) {
         return $url;
       }
@@ -154,18 +154,8 @@ namespace Post_From_Email {
 
       $doc->preserveWhiteSpace = false;
       @$doc->loadHTMLFile( $url );
-      $this->clean_doc( $doc );
-      $this->annotate_doc( $doc );
-      $dirs    = wp_upload_dir();
-      $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
-      if ( ! @file_exists( $dirname ) ) {
-        @mkdir( $dirname );
-      }
-      $pathname = $dirname . DIRECTORY_SEPARATOR . $name;
-      $doc->saveHTMLFile( $pathname );
-      $pathname = $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
 
-      return $pathname;
+      return $this->write_sanitized_doc( $doc, $name );
     }
 
     /**
@@ -177,17 +167,7 @@ namespace Post_From_Email {
       $doc->preserveWhiteSpace = false;
       @$doc->loadHTML( get_post_meta( get_the_ID(), $atts['meta_tag'], true ) );
 
-      $this->clean_doc( $doc );
-      $this->annotate_doc( $doc );
-      $dirs    = wp_upload_dir();
-      $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
-      if ( ! @file_exists( $dirname ) ) {
-        @mkdir( $dirname );
-      }
-      $pathname = $dirname . DIRECTORY_SEPARATOR . $name;
-      $doc->saveHTMLFile( $pathname );
-
-      return $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
+      return $this->write_sanitized_doc( $doc, $name );
     }
 
     /**
@@ -236,6 +216,29 @@ namespace Post_From_Email {
       $tag->setAttribute( 'src', $src );
       $body = ( new \DOMXpath( $doc ) )->query( '/html/body' );
       $body[0]->appendChild( $tag );
+    }
+
+    /**
+     * Sanitize the document and write it to a file for iframe retrieval, creating the directory as needed.
+     *
+     * @param \DOMDocument $doc The HTML document.
+     * @param string       $name The filename.
+     *
+     * @return string The url of the file written.
+     * @throws \DOMException
+     */
+    private function write_sanitized_doc( \DOMDocument &$doc, $name ) {
+      $this->clean_doc( $doc );
+      $this->annotate_doc( $doc );
+      $dirs    = wp_upload_dir();
+      $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
+      if ( ! @file_exists( $dirname ) ) {
+        @mkdir( $dirname );
+      }
+      $pathname = $dirname . DIRECTORY_SEPARATOR . $name;
+      file_put_contents( $pathname, wp_kses( $doc->saveHTML(), 'post' ), LOCK_EX );
+
+      return $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
     }
   }
 }

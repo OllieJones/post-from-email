@@ -96,7 +96,7 @@ namespace Post_From_Email {
           return $id;
         }
 
-        update_post_meta( $id, $meta_key, $doc->saveHTML() );
+        update_post_meta( $id, $meta_key, wp_kses ($doc->saveHTML(), 'post' ) );
       } catch ( Exception $ex ) {
         return new WP_Error( $ex->getMessage() );
       }
@@ -157,8 +157,8 @@ namespace Post_From_Email {
      * Retrieve an element's text contents from a DOMDocument.
      *
      * @param DOMDocument $doc The document.
-     * @param string       $doc_path The xpath of the desired element. We return the first element found.
-     * @param string       $default The default value if the element isn't found.
+     * @param string      $doc_path The xpath of the desired element. We return the first element found.
+     * @param string      $default The default value if the element isn't found.
      *
      * @return mixed
      */

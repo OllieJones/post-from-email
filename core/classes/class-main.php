@@ -2,10 +2,9 @@
 
 namespace Post_From_Email {
 // Exit if accessed directly.
-	if ( ! defined( 'ABSPATH' ) ) {
+  if ( ! defined( 'ABSPATH' ) ) {
     exit;
   }
-
 
   if ( ! class_exists( 'Main' ) ) :
 
@@ -36,6 +35,14 @@ namespace Post_From_Email {
       public $settings;
 
       /**
+       * Profile (custom post type) object.
+       *
+       * @access  public
+       * @var    Profile
+       */
+      public $profile;
+
+      /**
        * Main Embed Instance.
        *
        * Insures that only one instance of Post_From_Email exists in memory at any one
@@ -48,31 +55,34 @@ namespace Post_From_Email {
        */
       public static function instance() {
         if ( ! isset( self::$instance ) && ! ( self::$instance instanceof Main ) ) {
-	        self::$instance = new Main;
-	        self::$instance->base_hooks();
-	        require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-controller.php';
-	        require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-run.php';
-	        if ( is_admin() ) {
-		        require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-settings.php';
-		        self::$instance->settings = new Settings();
-	        }
-	        self::$instance->rest = new Controller();
-	        self::$instance->rest->init();
+          self::$instance = new Main;
+          self::$instance->base_hooks();
+          require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-controller.php';
+          require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-run.php';
+          require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
+          if ( is_admin() ) {
+            require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-settings.php';
+            self::$instance->settings = new Settings();
+            require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-profile.php';
+            self::$instance->profile = new Profile();
+          }
+          self::$instance->rest = new Controller();
+          self::$instance->rest->init();
 
-	        //Fire the plugin logic
-	        new Run();
+          //Fire the plugin logic
+          new Run();
 
           /* TODO testing popping */
-          require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
+         /* require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
           $popper = new Pop_Email();
-          foreach ( $popper->fetch_all() as $message) {
-            $foo = $message;
-          }
+          foreach ( $popper->fetch_all() as $message ) {
+            $foo     = $message;  // TODO
+          }*/
           /**
-	         * Fire a custom action to allow dependencies
-	         * after the successful plugin setup
-	         */
-	        do_action( 'POST_FROM_EMAIL/plugin_loaded' );
+           * Fire a custom action to allow dependencies
+           * after the successful plugin setup
+           */
+          do_action( 'POST_FROM_EMAIL/plugin_loaded' );
         }
 
         return self::$instance;
@@ -86,7 +96,7 @@ namespace Post_From_Email {
       private function base_hooks() {
         add_action( 'plugins_loaded', [ self::$instance, 'load_textdomain' ] );
         /* handle cron cache cleanup */
-        add_action( self::CLEAN_EVENT_HOOK, array( $this, 'clean' ), 10, 0 );
+        add_action( self::CLEAN_EVENT_HOOK, array( $this, 'clean_cache_directory' ), 10, 0 );
         if ( ! wp_next_scheduled( self::CLEAN_EVENT_HOOK ) ) {
           wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CLEAN_EVENT_HOOK );
         }
@@ -110,21 +120,21 @@ namespace Post_From_Email {
        *
        * @return void
        */
-      public function clean () {
+      public function clean_cache_directory() {
         $dirs    = wp_upload_dir();
         $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
         if ( ! @file_exists( $dirname ) ) {
           @mkdir( $dirname );
         }
-        $files = scandir ( $dirname );
-        foreach ($files as $file) {
-          if (is_string ($file) && str_ends_with ($file, '.html') ) {
+        $files = scandir( $dirname );
+        foreach ( $files as $file ) {
+          if ( is_string( $file ) && str_ends_with( $file, '.html' ) ) {
             $path = get_transient( POST_FROM_EMAIL_SLUG . '-file-' . $file );
             if ( ! $path ) {
               $pathname = $dirname . DIRECTORY_SEPARATOR . $file;
               @unlink( $pathname );
-              if ( WP_DEBUG_LOG ) {
-                error_log (POST_FROM_EMAIL_NAME . ': removed cache file ' . $pathname );
+              if ( WP_DEBUG_LOG ) {   //TODO debugging only
+                error_log( POST_FROM_EMAIL_NAME . ': removed cache file ' . $pathname );
               }
             }
           }

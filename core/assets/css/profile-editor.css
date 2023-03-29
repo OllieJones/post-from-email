@@ -1,0 +1,22 @@
+/*----------------- 
+Backend related CSS
+-----------------*/
+
+/* make it look like Gmail's POP credentials box */
+div#credentials, div#filter {
+    background-color: #fff7d7;
+    border-color: #fad163;
+}
+div#credentials > div.postbox-header, div#filter > div.postbox-header {
+    background-color: #fad163;
+    border-color: #fad163;
+}
+
+table.credentials {
+    width: fit-content;
+}
+
+table.credentials > tbody > tr > td:first-of-type {
+    text-align: right;
+    width: fit-content;
+}

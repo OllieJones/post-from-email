@@ -65,6 +65,9 @@ define( 'POST_FROM_EMAIL_PLUGIN_DIR', plugin_dir_path( POST_FROM_EMAIL_PLUGIN_FI
 // Plugin Folder URL
 define( 'POST_FROM_EMAIL_PLUGIN_URL', plugin_dir_url( POST_FROM_EMAIL_PLUGIN_FILE ) );
 
+// Plugin's custom post type for source profile (email address)
+const POST_FROM_EMAIL_PROFILE = POST_FROM_EMAIL_SLUG . '-prof';
+
 /**
  * Load the main class for the core functionality
  */
