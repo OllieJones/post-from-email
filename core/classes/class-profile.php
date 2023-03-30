@@ -18,6 +18,7 @@ namespace Post_From_Email {
    add_action( 'edit_post' . '_' . POST_FROM_EMAIL_PROFILE, [ $this, 'save_profile_credentials' ], 10, 3 );
    add_action( 'admin_init', function () {
     add_action( 'edit_form_after_title', [ $this, 'explanatory_header' ] );
+    add_filter( 'wp_editor_settings', [ $this, 'editor_settings' ], 10, 2 );
    } );
   }
 
@@ -65,20 +66,6 @@ namespace Post_From_Email {
      'menu_position'        => 90,
      'menu_icon'            => 'dashicons-email-alt2',
      'map_meta_cap'         => true,
-     /* 'capability_type'      => POST_FROM_EMAIL_PROFILE,
-     'capabilities'          => array(
-     'edit_others_posts'      => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'delete_posts'           => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'publish_posts'          => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'create_posts'           => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'read_private_posts'     => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'delete_private_posts'   => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'delete_published_posts' => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'delete_others_posts'    => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'edit_private_posts'     => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'edit_published_posts'   => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     'edit_posts'             => 'edit'  . '_' . POST_FROM_EMAIL_PROFILE,
-     ), */
      'supports'             => array(
       'title',
       'editor',
@@ -103,7 +90,7 @@ namespace Post_From_Email {
 
    add_meta_box(
     'credentials',
-    __( 'Edit mail account', 'post-from-email' ),
+    __( 'Access settings for your dedicated mailbox', 'post-from-email' ),
     array( $this, 'credentials_meta_box' ),
     null,
     'advanced', /* advanced|normal|side */
@@ -150,7 +137,6 @@ namespace Post_From_Email {
     }
     $options = implode( PHP_EOL, $options );
     ?>
-    <h4><?php esc_html_e( 'Enter access settings for the mailbox where you will send your posts' ) ?></h4>
     <p><?php esc_html_e( 'When you set up your mailbox, your email hosting provider gives you this information.' ) ?></p>
     <hr/>
     <table class="credentials">
@@ -158,7 +144,7 @@ namespace Post_From_Email {
       <td>
        <label for="email"><?php esc_html_e( 'Email address', 'post-from-email' ) ?>:</label>
       </td>
-      <td>
+      <td colspan="2" class="cred">
        <input type="email" id="user" name="credentials[email]"
               value="<?php esc_attr_e( $credentials['address'] ); ?>"
        >
@@ -168,7 +154,7 @@ namespace Post_From_Email {
       <td>
        <label for="user"><?php esc_html_e( 'Username', 'post-from-email' ) ?>:</label>
       </td>
-      <td>
+      <td colspan="2" class="cred">
        <input type="text" id="user" name="credentials[user]"
               value="<?php esc_attr_e( $credentials['user'] ); ?>"
        >
@@ -178,7 +164,7 @@ namespace Post_From_Email {
       <td>
        <label for="pass"><?php esc_html_e( 'Password', 'post-from-email' ) ?>:</label>
       </td>
-      <td>
+      <td colspan="2" class="cred">
        <input type="password" id="pass" name="credentials[pass]"
               placeholder="<?php esc_html_e( 'Password', 'post-from-email' ) ?>"
               value="<?php echo esc_attr( $credentials['pass'] ); ?>"
@@ -232,12 +218,11 @@ namespace Post_From_Email {
 
    $credentials = Pop_Email::sanitize_credentials( $credentials );
 
-   $allowlist = Pop_Email::sanitize_email_list($credentials['allowlist']);
-   $allowcount = max ( 10, min ( 4, count ( explode ("\n", $allowlist ) ) + 1 ) );
+   $allowlist  = Pop_Email::sanitize_email_list( $credentials['allowlist'] );
+   $allowcount = min( 10, max( 4, count( explode( "\n", $allowlist ) ) + 1 ) );
 
    ?>
-   <h4><?php esc_html_e( 'Enter rules for accepting posts from email' ) ?></h4>
-   <p><?php esc_html_e( 'These rules help prevent spammers from abusing the email box that posts to your site.' ) ?></p>
+   <p><?php esc_html_e( 'These filters help prevent spammers from abusing your mailbox to generate unwanted posts.' ) ?></p>
    <hr/>
    <table class="credentials">
 
@@ -249,14 +234,14 @@ namespace Post_From_Email {
       <textarea id="allowlist"
                 rows="<?php echo $allowcount ?>"
                 name="credentials[allowlist]"
-                placeholder="<?php esc_attr_e( 'Posts allowed from any sender', 'post-from-email'); ?>"
+                placeholder="<?php esc_attr_e( 'Posts allowed from any sender', 'post-from-email' ); ?>"
       ><?php echo $credentials['allowlist'] ?></textarea>
      </td>
     </tr>
     <tr>
      <td></td>
      <td>
-      <?php esc_html_e('Enter the addresses of email senders you trust to post to your site, one per line.'); ?>
+      <?php esc_html_e( 'Enter the addresses of email senders you trust to post to your site, one per line.' ); ?>
      </td>
     </tr>
     <tr>
@@ -288,6 +273,11 @@ namespace Post_From_Email {
 
   public function save_profile_credentials( $post_ID, $post ) {
 
+   if ( is_array( $_POST['data'] )
+        && array_key_exists( 'action', $_POST['data'] )
+        && 'heartbeat' === $_POST['data']['action'] ) {
+    return;
+   }
    $foo = $post_ID;
   }
 
@@ -317,8 +307,18 @@ namespace Post_From_Email {
    ?>
    <h3><?php esc_html_e( 'This is a template for retrieving posts from email.', 'post-from-email' ) ?> </h3>
    <p>
-    <?php esc_html_e( 'To retrieve posts from email, enter the email account\'s information.', 'post-from-email' ) ?>
+    <?php esc_html_e( 'Post to your site by sending email messages to a dedicated mailbox.', 'post-from-email' ) ?>
+    <?php esc_html_e( 'To do this you need a dedicated mailbox on a convenient email server.', 'post-from-email' ) ?>
+    <?php esc_html_e( '(Many hosting services let you create mailboxes.)', 'post-from-email' ) ?>
+    <?php esc_html_e( 'Then, put that mailbox on your listserv or email marketing service\'s distribution list.', 'post-from-email' ) ?>
+    <?php esc_html_e( '(Constant Contact and Mailchimp are popular services.)', 'post-from-email' ) ?>
+   </p>
+   <p>
+    <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s  account information here.', 'post-from-email' ) ?>
     <?php esc_html_e( 'Your retrieved posts inherit the categories, tags, and author you set for this template.', 'post-from-email' ) ?>
+   </p>
+   <p>
+    <?php esc_html_e( 'Create one of these templates for each dedicated mailbox you use for posting.', 'post-from-email' ) ?>
    </p>
    <p><?php
     echo esc_html(
@@ -328,6 +328,37 @@ namespace Post_From_Email {
       POST_FROM_EMAIL_SLUG
      ) ) ?> </p>
    <?php
+  }
+
+  /**
+   * Filters the wp_editor() settings.
+   *
+   * @param array  $settings Array of editor arguments.
+   * @param string $editor_id Unique editor identifier, e.g. 'content'. Accepts 'classic-block'
+   *                          when called from block editor's Classic block.
+   *
+   * @since 4.0.0
+   *
+   * @see _WP_Editors::parse_settings()
+   *
+   */
+  public function editor_settings( $settings, $editor_id ) {
+   global $post;
+
+   if ( 'content' !== $editor_id || empty ( $post ) || POST_FROM_EMAIL_PROFILE !== get_post_type( $post ) ) {
+    return $settings;
+   }
+
+   /* This is a botch. It looks like tiny mce ignores its window-size settings, so we'll just horse 'em with Javascript */
+   wp_enqueue_script( 'profile-editor',
+    POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/js/profile-editor.js',
+    [],
+    POST_FROM_EMAIL_VERSION );
+
+   //$settings['textarea_rows'] = 10;
+   //$settings['editor_height'] = 150;
+
+   return $settings;
   }
 
  }

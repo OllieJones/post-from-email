@@ -20,3 +20,14 @@ table.credentials > tbody > tr > td:first-of-type {
     text-align: right;
     width: fit-content;
 }
+table.credentials > tbody > tr > td:first-of-type {
+    text-align: right;
+    width: fit-content;
+}
+table.credentials > tbody > tr > td.cred > input {
+    width: 99%;
+}
+
+textarea#allowlist {
+    width: 90%
+}
