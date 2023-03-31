@@ -22,6 +22,16 @@ namespace Post_From_Email {
    } );
   }
 
+  /**
+   * Register our custom post type. post_from_email_prof .
+   *
+   * The user interface sometimes calls this a "template" and sometimes a "profile"
+   *
+   * @return void
+   *
+   * This IDE thinks "Insert into template" is SQL. Hence the next line
+   * @noinspection SqlNoDataSourceInspection
+   */
   public function register_post_type() {
    register_post_type(
     POST_FROM_EMAIL_PROFILE,
@@ -42,7 +52,7 @@ namespace Post_From_Email {
       'not_found'                => __( 'No templates found. Create one.', 'post-from-email' ),
       'not_found_in_trash'       => __( 'No templaces found in Trash.', 'post-from-email' ),
       'archives'                 => __( 'Archive of templates for posts from email', 'post-from-email' ),
-      'insert_into_item'         => __( 'Insert into Profile', 'post-from-email' ),
+      'insert_into_item'         => __( 'Insert into template', 'post-from-email' ),
       'uploaded_to_this_item'    => __( 'Uploaded to this template', 'post-from-email' ),
       'filter_items_list'        => __( 'Filter template list', 'post-from-email' ),
       'items_list_navigation'    => __( 'Template list navigation', 'post-from-email' ),
@@ -86,11 +96,18 @@ namespace Post_From_Email {
    );
   }
 
+  /**
+   * Handle the username/password and filters meta boxes.
+   *
+   * @param $post
+   *
+   * @return void
+   */
   public function make_meta_boxes( $post ) {
 
    add_meta_box(
     'credentials',
-    __( 'Access settings for your dedicated mailbox', 'post-from-email' ),
+    __( 'Your dedicated mailbox\'s settings', 'post-from-email' ),
     array( $this, 'credentials_meta_box' ),
     null,
     'advanced', /* advanced|normal|side */
@@ -100,7 +117,7 @@ namespace Post_From_Email {
 
    add_meta_box(
     'filter',
-    __( 'Filter incoming messages', 'post-from-email' ),
+    __( 'Your incoming message filter settings', 'post-from-email' ),
     array( $this, 'filter_meta_box' ),
     null,
     'advanced', /* advanced|normal|side */
@@ -111,7 +128,15 @@ namespace Post_From_Email {
    remove_meta_box( 'generate_layout_options_meta_box', null, 'side' );
   }
 
-  public function credentials_meta_box( $post, $args ) {
+  /**
+   * HTML for the first metabox, usernam, password, all that.
+   *
+   * @param \WP_Post $post current post.
+   * @param          $callback_args
+   *
+   * @return void
+   */
+  public function credentials_meta_box( $post, $callback_args ) {
 
    wp_enqueue_style( 'profile-editor',
     POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/profile-editor.css',
@@ -139,14 +164,18 @@ namespace Post_From_Email {
     ?>
     <p><?php esc_html_e( 'When you set up your mailbox, your email hosting provider gives you this information.' ) ?></p>
     <hr/>
+    <input type="hidden" name="credentials[type]" value="<?php echo esc_attr( $credentials['type'] ) ?>"/>
+    <input type="hidden" name="credentials[folder]" value="<?php echo esc_attr( $credentials['folder'] ) ?>"/>
+    <input type="hidden" name="credentials[posted]" value="<?php echo esc_attr( time() ) ?>"/>
+    <?php wp_nonce_field( 'wp_rest', 'credentialnonce', false ) ?>
     <table class="credentials">
      <tr>
       <td>
-       <label for="email"><?php esc_html_e( 'Email address', 'post-from-email' ) ?>:</label>
+       <label for="address"><?php esc_html_e( 'Email address', 'post-from-email' ) ?>:</label>
       </td>
       <td colspan="2" class="cred">
-       <input type="email" id="user" name="credentials[email]"
-              value="<?php esc_attr_e( $credentials['address'] ); ?>"
+       <input type="email" id="address" name="credentials[address]"
+              value="<?php echo esc_attr( $credentials['address'] ); ?>"
        >
       </td>
      </tr>
@@ -156,7 +185,7 @@ namespace Post_From_Email {
       </td>
       <td colspan="2" class="cred">
        <input type="text" id="user" name="credentials[user]"
-              value="<?php esc_attr_e( $credentials['user'] ); ?>"
+              value="<?php echo esc_attr( $credentials['user'] ); ?>"
        >
       </td>
      </tr>
@@ -196,6 +225,39 @@ namespace Post_From_Email {
         for="ssl-checked"><?php esc_html_e( 'Always use a secure connection (SSL) when retrieving mail', 'post-from-email' ) ?></label>
       </td>
      </tr>
+
+     <tr>
+      <td colspan="3">
+       <hr/>
+      </td>
+     </tr>
+     <tr>
+      <td class="test_button">
+       <div>
+        <span id="credential-spinner" class="spinner" style="float:none;"></span>
+        <input type="button" id="test" value="<?php esc_attr_e( 'Test', 'post-from-email' ) ?>">
+        <div class="clear"></div>
+       </div>
+      </td>
+      <td colspan="2">
+       <?php
+       if ( isset ( $credentials['status'] ) && true === $credentials['status'] ) {
+        echo '<div id="status_message" class="success">' . esc_html__( 'Connected', 'post-from-email' ) . '</div>';
+       } elseif ( isset ( $credentials['status'] ) && is_string( $credentials['status'] ) ) {
+        echo '<div id="status_message" class="failure">';
+        $msg   = [];
+        $lines = explode( "\n", $credentials['status'] );
+        foreach ( $lines as $line ) {
+         $msg [] = esc_html( $line );
+        }
+        echo implode( '<br/>', $msg );
+        echo '</div>';
+       } else {
+        echo '<div id="status_message" class="unknown"></div>';
+       }
+       ?>
+      </td>
+     </tr>
     </table>
     <?php
    } else {
@@ -204,7 +266,15 @@ namespace Post_From_Email {
    }
   }
 
-  public function filter_meta_box( $post, $args ) {
+  /**
+   * HTML for the second metabox, allowlist and DKIM.
+   *
+   * @param \WP_Post $post current post.
+   * @param array    $callback_args Args given to make_meta_box()
+   *
+   * @return void
+   */
+  public function filter_meta_box( $post, $callback_args ) {
 
    wp_enqueue_style( 'profile-editor',
     POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/profile-editor.css',
@@ -212,7 +282,7 @@ namespace Post_From_Email {
     POST_FROM_EMAIL_VERSION );
 
    $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
-   if ( ! $credentials ) {
+   if ( ! is_array( $credentials ) ) {
     $credentials = Pop_Email::$template_credentials;
    }
 
@@ -273,12 +343,29 @@ namespace Post_From_Email {
 
   public function save_profile_credentials( $post_ID, $post ) {
 
-   if ( is_array( $_POST['data'] )
-        && array_key_exists( 'action', $_POST['data'] )
-        && 'heartbeat' === $_POST['data']['action'] ) {
+   if ( isset ( $_POST['action'] ) && 'editpost' !== $_POST['action'] ) {
     return;
    }
-   $foo = $post_ID;
+   if ( POST_FROM_EMAIL_PROFILE !== $post->post_type ) {
+    return;
+   }
+   if ( ! $post_ID ) {
+    return;
+   }
+   if ( ! isset ( $_POST['credentials'] ) || ! is_array( $_POST['credentials'] ) ) {
+    return;
+   }
+
+   $credentials = $_POST['credentials'];
+
+   $credentials = Pop_Email::sanitize_credentials( $credentials );
+   $result      = $this->popper->login( $credentials );
+   if ( true === $result ) {
+    $this->popper->close();
+   }
+   $credentials['status'] = $result;
+
+   update_post_meta( $post_ID, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
   }
 
   /**

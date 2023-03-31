@@ -20,12 +20,18 @@ table.credentials > tbody > tr > td:first-of-type {
     text-align: right;
     width: fit-content;
 }
-table.credentials > tbody > tr > td:first-of-type {
-    text-align: right;
-    width: fit-content;
-}
 table.credentials > tbody > tr > td.cred > input {
     width: 99%;
+}
+
+table.credentials > tbody > tr > td > div#status_message.failure {
+    border-color: red;
+    border-width: 1px;
+    border-style:ridge;
+    padding: 0.5em;
+}
+table.credentials > tbody > tr > td > div#status_message.success {
+    color: green;
 }
 
 textarea#allowlist {

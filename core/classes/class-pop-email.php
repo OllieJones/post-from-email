@@ -19,36 +19,21 @@ namespace Post_From_Email {
    * @author    Ollie Jones
    */
   class Pop_Email {
-    static $default_credentials;
     static $template_credentials;
     public $connection;
     public $credentials;
 
     public function __construct() {
-      self::$default_credentials  = array(
-        'type'        => 'pop',
-        'address'     => 'post-from-email@plumislandmedia.net',
-        'host'        => 'mail.plumislandmedia.net',
-        'port'        => 995,
-        'user'        => 'post-from-email@plumislandmedia.net',
-        'pass'        => 'REDACTED',  //TODO
-        'ssl'         => true,
-        'dkim'        => true,
-        'allowlist'   => "happy@example.com\ntrusted@example.com",
-        'folder'      => 'INBOX',
-        'disposition' => 'save', // TODO debugging. In production should be 'delete' or missing entirely.
-        'debug'       => true,   // TODO debugging. In production should be false or missing entirely.
-      );
       self::$template_credentials = array(
         'type'        => 'pop',
-        'address'     => 'user@example.com',
-        'host'        => 'mail.example.com',
+        'address'     => '',
+        'host'        => '',
         'port'        => 995,
-        'user'        => 'user@mail.example.com',
-        'pass'        => 'secret',
+        'user'        => '',
+        'pass'        => '',
         'ssl'         => true,
         'dkim'        => true,
-        'allowlist'   => "happy@example.com\ntrusted@example.com",
+        'allowlist'   => "",
         'folder'      => 'INBOX',
         'disposition' => 'delete', // TODO debugging. In production should be 'delete' or missing entirely.
         'debug'       => false,   // TODO debugging. In production should be false or missing entirely.
@@ -95,14 +80,54 @@ namespace Post_From_Email {
       return '';
     }
 
+    /**
+     * Verify a nonce embedded in the credentials array.
+     *
+     * @param array $credentials Array of credentials.
+     *
+     * @return bool
+     */
+    public static function verify_nonce( $credentials ) {
+      if ( isset  ( $credentials['nonce'] ) && is_string( $credentials['nonce'] ) && isset ( $credentials['id'] ) && is_numeric( $credentials['id'] ) ) {
+        return 1 === wp_verify_nonce( 'wp_rest' );
+      } else {
+        unset( $credentials['nonce'] );
+        unset( $credentials['id'] );
+
+        return false;
+      }
+    }
+
+    /**
+     * Sanitize the email server credential array.
+     *
+     * @param array $credentials The array to sanitize
+     *
+     * @return array The sanitized array.
+     */
     public static function sanitize_credentials( $credentials ) {
 
+      unset ( $credentials['nonce'] );
+      unset ( $credentials['id'] );
       $credentials['host'] = self::sanitize_hostname( $credentials['host'] );
       $credentials['port'] = intval( $credentials['port'] );
 
       $credentials['address'] = sanitize_email( $credentials['address'] );
       $credentials['user']    = self::sanitize_username( $credentials ['user'] );
-      /* Coerce mixed to boolean. */
+      /* Cope with the quirkiness of unchecked checkboxes */
+      if ( isset( $credentials['posted'] ) ) {
+        unset ( $credentials['posted'] );
+        $credentials['ssl'] = false;
+        if ( isset( $credentials['ssl_checked'] ) && 'on' === $credentials['ssl_checked'] ) {
+          $credentials['ssl'] = true;
+          unset ( $credentials['ssl_checked'] );
+        }
+        $credentials['dkim'] = false;
+        if ( isset( $credentials['dkim_checked'] ) && 'on' === $credentials['dkim_checked'] ) {
+          $credentials['dkim'] = true;
+          unset ( $credentials['dkim_checked'] );
+        }
+      }
       $credentials['ssl']  = ! ! $credentials['ssl'];
       $credentials['dkim'] = ! ! $credentials['dkim'];
 
@@ -112,7 +137,7 @@ namespace Post_From_Email {
       if ( ! in_array( $credentials['port'], $allowed_ports, true ) ) {
         $credentials['port'] = 0;
       }
-      if ( ! is_string( $credentials['folder'] ) || strlen( $credentials['folder'] ) <= 0 ) {
+      if ( ! isset ( $credentials['folder'] ) || ! is_string( $credentials['folder'] ) || strlen( $credentials['folder'] ) <= 0 ) {
         $credentials['folder'] = 'INBOX';
       }
 
@@ -172,7 +197,7 @@ namespace Post_From_Email {
       if ( ! extension_loaded( 'imap' ) ) {
         return false;
       }
-      $credentials = is_null( $credentials ) ? self::$default_credentials : $credentials;
+      $credentials = is_null( $credentials ) ? self::$template_credentials : $credentials;
       $folder      = array_key_exists( 'folder', $credentials ) ? $credentials['folder'] : 'INBOX';
 
       if ( 'pop' === $credentials['type'] ) {
@@ -184,16 +209,17 @@ namespace Post_From_Email {
 
         $flags            = implode( '', $flags );
         $mailbox          = '{' . $credentials['host'] . ':' . $credentials['port'] . $flags . '}' . $folder;
-        $this->connection = imap_open( $mailbox, $credentials['user'], $credentials['pass'] );
+        $this->connection = @imap_open( $mailbox, $credentials['user'], $credentials['pass'] );
 
-        $result = imap_errors();
+        $result = @imap_errors();
         if ( $result ) {
           if ( $this->connection ) {
             /* Unknown whether this code path is necessary */
-            array_unshift( $result, 'Error opening ' . $mailbox );
+            $message = __( 'Error opening', 'post-from-email' ) . ' ' . $mailbox;
           } else {
-            array_unshift( $result, 'Cannot open ' . $mailbox );
+            $message = __( 'Cannot open', 'post-from-email' ) . ' ' . $mailbox;
           }
+          array_unshift( $result, $message );
           $result = implode( PHP_EOL, array_reverse( $result ) );
         } else {
           $result = true;
@@ -211,7 +237,7 @@ namespace Post_From_Email {
      * @return array
      */
     public function stat() {
-      $check = imap_mailboxmsginfo( $this->connection );
+      $check = @imap_mailboxmsginfo( $this->connection );
 
       return (array) $check;
     }
@@ -225,11 +251,11 @@ namespace Post_From_Email {
      */
     public function list_messages( $sequence = null ) {
       if ( ! $sequence ) {
-        $MC       = imap_check( $this->connection );
+        $MC       = @imap_check( $this->connection );
         $sequence = "1:" . $MC->Nmsgs;
       }
 
-      $messages = imap_fetch_overview( $this->connection, $sequence );
+      $messages = @imap_fetch_overview( $this->connection, $sequence );
       $result   = array();
       foreach ( $messages as $message ) {
         $result[ $message->msgno ] = (array) $message;
@@ -246,7 +272,7 @@ namespace Post_From_Email {
      * @return false|string The message's RFC822 headers in one string.
      */
     public function fetcheader( $message_num ) {
-      return imap_fetchheader( $this->connection, $message_num, FT_PREFETCHTEXT );
+      return @imap_fetchheader( $this->connection, $message_num, FT_PREFETCHTEXT );
     }
 
     /**
@@ -262,7 +288,7 @@ namespace Post_From_Email {
         return false;
       }
 
-      return imap_delete( $this->connection, $message_num );
+      return @imap_delete( $this->connection, $message_num );
     }
 
     /**
@@ -275,7 +301,7 @@ namespace Post_From_Email {
       $flag =
         isset ( $this->$credentials['disposition'] ) && 'delete' !== $this->$credentials['disposition'] ? CL_EXPUNGE : 0;
 
-      imap_close( $this->connection, $flag );
+      @imap_close( $this->connection, $flag );
     }
 
     /**
@@ -305,7 +331,7 @@ namespace Post_From_Email {
      */
     public function mail_mime_to_array( $message_num ) {
 
-      $mail = imap_fetchstructure( $this->connection, $message_num );
+      $mail = @imap_fetchstructure( $this->connection, $message_num );
 
       $mail = $this->mail_get_parts( $message_num, $mail, 0 );
 
@@ -369,11 +395,11 @@ namespace Post_From_Email {
         }
       }
 
-      $attachment['data'] = imap_fetchbody( $this->connection, $message_num, $section );
+      $attachment['data'] = @imap_fetchbody( $this->connection, $message_num, $section );
       if ( $part->encoding == 3 ) { // 3 = BASE64
-        $attachment['data'] = imap_base64( $attachment['data'] );
+        $attachment['data'] = @imap_base64( $attachment['data'] );
       } elseif ( $part->encoding == 4 ) { // 4 = QUOTED-PRINTABLE
-        $attachment['data'] = imap_qprint( $attachment['data'] );
+        $attachment['data'] = @imap_qprint( $attachment['data'] );
       }
 
       $subtype = strtolower( $part->subtype );

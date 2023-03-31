@@ -27,6 +27,13 @@ namespace Post_From_Email {
       $this->add_hooks();
     }
 
+    /**
+     * Turn an email object into a post.
+     *
+     * @param array $upload Uploaded email object.
+     *
+     * @return string|WP_Error
+     */
     public function process( $upload ) {
 
       $categories = array();
@@ -36,7 +43,7 @@ namespace Post_From_Email {
                && array_key_exists( 'headers', $upload )
                && array_key_exists( 'html', $upload );
       if ( ! $valid ) {
-        return $this->error( 'Invalid object' );
+        return $this->error( 'Invalid email upload array' );
       }
 
       if ( array_key_exists( 'to', $upload['headers'] ) ) {
@@ -101,7 +108,7 @@ namespace Post_From_Email {
         return new WP_Error( $ex->getMessage() );
       }
 
-      return new WP_REST_Response( 'OK' );
+      return 'OK';
     }
 
     public function permission( WP_REST_Request $req ) {
