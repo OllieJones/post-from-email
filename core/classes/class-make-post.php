@@ -24,17 +24,17 @@ namespace Post_From_Email {
       $this->version   = '1';
       $this->namespace = POST_FROM_EMAIL_SLUG;
       $this->base      = 'upload';
-      $this->add_hooks();
     }
 
     /**
      * Turn an email object into a post.
      *
-     * @param array $upload Uploaded email object.
+     * @param array         $upload Uploaded email object.
+     * @param \WP_POST|null $profile The creation template.
      *
      * @return string|WP_Error
      */
-    public function process( $upload ) {
+    public function process( $upload, $profile = null ) {
 
       $categories = array();
       $tags       = array();
@@ -43,11 +43,11 @@ namespace Post_From_Email {
                && array_key_exists( 'headers', $upload )
                && array_key_exists( 'html', $upload );
       if ( ! $valid ) {
-        return $this->error( 'Invalid email upload array' );
+        return new WP_Error( 'imap', 'Invalid email upload array' ) ;
       }
 
       if ( array_key_exists( 'to', $upload['headers'] ) ) {
-        foreach ( $this->get_properties_from_email( $upload['headers']['to'] ) as $category ) {
+        foreach ( $this->get_properties_from_email( imap_utf8( $upload['headers']['to'] ) ) as $category ) {
           $categories [] = $this->maybe_insert_category( $category, $category, $category );
         }
       }
@@ -57,14 +57,15 @@ namespace Post_From_Email {
         $doc = new DOMDocument( '1.0', 'utf-8' );
 
         $doc->preserveWhiteSpace = false;
-        $doc->loadHTML( $upload['html'] );
+        @$doc->loadHTML( $upload['html'], LIBXML_NOWARNING );
 
         $title = $this->getElementContents( $doc, '/html/head/title', '' );
         if ( 0 === strlen( $title ) ) {
-          $title = $upload['headers']['subject'];
+          $title = imap_utf8( $upload['headers']['subject'] );
         }
 
-        $tag = $this->base32_encode( md5( $upload['headers']['message_id'] ) );
+        /* A unique filename-safe (all lower case) tag for an email */
+        $tag = $this->base32_encode( md5( serialize( $upload['headers'] ), true ) );
 
         /* Use the date from the email header if available.  */
 
@@ -103,34 +104,12 @@ namespace Post_From_Email {
           return $id;
         }
 
-        update_post_meta( $id, $meta_key, wp_kses ($doc->saveHTML(), 'post' ) );
+        update_post_meta( $id, $meta_key, $doc->saveHTML(), 'post' );
       } catch ( Exception $ex ) {
-        return new WP_Error( $ex->getMessage() );
+        return new WP_Error( 'imap', $ex->getMessage() );
       }
 
       return 'OK';
-    }
-
-    public function permission( WP_REST_Request $req ) {
-      if ( $req->get_method() === 'POST' ) {
-        return true;
-      }
-
-      return current_user_can( 'read_private_posts' );
-    }
-
-    private function add_hooks() {
-
-      add_action( 'rest_api_init', function () {
-
-        register_rest_route( "$this->namespace/v$this->version", "/$this->base", [
-          [
-            'callback'            => [ $this, 'post' ],
-            'methods'             => 'POST',
-            'permission_callback' => '__return_true',
-          ],
-        ] );
-      } );
     }
 
     /**
@@ -147,17 +126,6 @@ namespace Post_From_Email {
       }
 
       return $uploadCategoryId;
-    }
-
-    /**
-     * Generate a REST error message.
-     *
-     * @return WP_Error
-     */
-    private function error( $message ) {
-      status_header( 400 );
-
-      return new WP_Error( 400, $message );
     }
 
     /**
@@ -217,7 +185,6 @@ namespace Post_From_Email {
      * @return string
      */
     private function base32_encode( $data ) {
-      $data  = hex2bin( $data );
       $chars = '0123456789abcdefghjkmnpqrstvwxyz';
       $mask  = 0b11111;
 

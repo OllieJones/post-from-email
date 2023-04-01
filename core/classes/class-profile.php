@@ -2,6 +2,8 @@
 
 namespace Post_From_Email {
 
+ use WP_Post;
+
  /**
   * Profile (post_type 'post_from_email_prof') is a custom post type for email source profiles.
   */
@@ -29,10 +31,9 @@ namespace Post_From_Email {
    *
    * @return void
    *
-   * This IDE thinks "Insert into template" is SQL. Hence the next line
-   * @noinspection SqlNoDataSourceInspection
    */
   public function register_post_type() {
+   /** @noinspection SqlNoDataSourceInspection */
    register_post_type(
     POST_FROM_EMAIL_PROFILE,
     array(
@@ -64,8 +65,8 @@ namespace Post_From_Email {
       'item_update'              => __( 'Templace updated', 'post-from-email' ),
 
      ),
-     'public'               => true, //TODO
      'hierarchical'         => false,
+     'public'               => true, //TODO not sure how these visibility parameters interact.
      'exclude_from_search'  => true,
      'publicly_queryable'   => false,
      'show_ui'              => true,
@@ -131,7 +132,7 @@ namespace Post_From_Email {
   /**
    * HTML for the first metabox, usernam, password, all that.
    *
-   * @param \WP_Post $post current post.
+   * @param WP_Post $post current post.
    * @param          $callback_args
    *
    * @return void
@@ -269,7 +270,7 @@ namespace Post_From_Email {
   /**
    * HTML for the second metabox, allowlist and DKIM.
    *
-   * @param \WP_Post $post current post.
+   * @param WP_Post $post current post.
    * @param array    $callback_args Args given to make_meta_box()
    *
    * @return void
@@ -335,7 +336,7 @@ namespace Post_From_Email {
    * the post type slug.
    *
    * @param int      $post_ID Post ID.
-   * @param \WP_Post $post Post object.
+   * @param WP_Post $post Post object.
    *
    * @since 3.7.0
    *
@@ -366,18 +367,6 @@ namespace Post_From_Email {
    $credentials['status'] = $result;
 
    update_post_meta( $post_ID, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
-  }
-
-  /**
-   * Filter the post-updated messaes
-   *
-   * @param array $todo Array of message strings
-   *
-   * @return array
-   */
-  public function filter_post_updated_messages( $todo ) {
-   //TODO
-   return $todo;
   }
 
   /**

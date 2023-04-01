@@ -1,12 +1,15 @@
 <?php
 
 namespace Post_From_Email {
+
 // Exit if accessed directly.
+  use WP_Query;
+
   if ( ! defined( 'ABSPATH' ) ) {
     exit;
   }
 
-  if ( ! class_exists( 'Main' ) ) :
+  if ( ! class_exists( 'Main' ) ) {
 
     /**
      * Main Post_From_Email Class.
@@ -73,11 +76,14 @@ namespace Post_From_Email {
           new Run();
 
           /* TODO testing popping */
-         /* require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
-          $popper = new Pop_Email();
-          foreach ( $popper->fetch_all() as $message ) {
-            $foo     = $message;  // TODO
-          }*/
+          add_action ('init', function () {
+            //TODO deboog self::$instance->check_mailboxes();
+          });
+          /* require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
+           $popper = new Pop_Email();
+           foreach ( $popper->fetch_all() as $message ) {
+             $foo     = $message;  // TODO
+           }*/
           /**
            * Fire a custom action to allow dependencies
            * after the successful plugin setup
@@ -141,8 +147,71 @@ namespace Post_From_Email {
         }
       }
 
+      /**
+       * Cronjob to check the registered mailboxes.
+       *
+       * @param int $batchsize The number of messages to process per registered mailbox in each run.
+       *
+       * @return void
+       */
+      public function check_mailboxes( $batchsize = 3) {
+
+        foreach ( $this->get_active_mailboxes() as $profile => $credentials ) {
+          $popper = new Pop_Email();
+
+          $login = $popper->login( $credentials );
+          if ( true !== $login ) {
+            error_log( $profile->ID . ': Pop_Email login failure: ' . $login );
+            continue;
+          }
+          try {
+            $count     = $batchsize;
+            foreach ( $popper->fetch_all() as $email ) {
+              if ( 0 === $count -- ) {
+                break;
+              }
+
+              require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
+              $post   = new Make_Post();
+              $result = $post->process( $email );
+              if ( is_wp_error( $result ) ) {
+                error_log( $profile->ID . ': Pop_Email retrieval failure: ' . $result->get_error_message() );
+              } else {
+                $popper->dele( $email['msgno'] );
+              }
+            }
+          } finally {
+            $popper->close();
+          }
+        }
+      }
+
+      /**
+       * Encapsulate the WP_Query to get mailbox profiles.
+       * @return \Generator
+       */
+      private function get_active_mailboxes() {
+        $args     = array(
+          'post_type' => POST_FROM_EMAIL_PROFILE,
+          'status'    => array( 'publish', 'private' ),
+        );
+        $profiles = new WP_Query( $args );
+        try {
+          if ( $profiles->have_posts() ) {
+            while ( $profiles->have_posts() ) {
+              $profiles->the_post();
+
+              $profile     = get_post();
+              $credentials = get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
+              if ( is_array( $credentials ) && is_string( $credentials['host'] ) && strlen( $credentials['host'] ) > 0 ) {
+                yield $profile => $credentials;
+              }
+            }
+          }
+        } finally {
+          wp_reset_postdata();
+        }
+      }
     }
-
-  endif; // End if class_exists check.
-
+  }
 }

@@ -87,7 +87,7 @@ namespace Post_From_Email {
         POST_FROM_EMAIL_VERSION,
         false );
 
-      $file_url = $this->get_file_url( $atts );
+      $file_url = esc_url( $this->get_file_url( $atts ) );
 
       return "<iframe id='frame0' class='post-from-email' style='overflow: hidden; height: 100%;
         width: 100%;' src='$file_url' ></iframe>";
@@ -127,10 +127,11 @@ namespace Post_From_Email {
     }
 
     private function get_file_url( $atts ): string {
+      global $post;
       if ( array_key_exists( 'src', $atts ) ) {
         $name = $this->get_filename( $atts['src'] );
-      } elseif ( array_key_exists( 'tag', $atts ) ) {
-        $name = $atts ['tag'] . '.html';
+      } else {
+        $name = POST_FROM_EMAIL_SLUG . $post->ID . '.html';
       }
       $path = get_transient( POST_FROM_EMAIL_SLUG . '-file-' . $name );
       if ( $path ) {
@@ -236,7 +237,7 @@ namespace Post_From_Email {
         @mkdir( $dirname );
       }
       $pathname = $dirname . DIRECTORY_SEPARATOR . $name;
-      file_put_contents( $pathname, wp_kses( $doc->saveHTML(), 'post' ), LOCK_EX );
+      file_put_contents( $pathname, $doc->saveHTML(), LOCK_EX );
 
       return $dirs['baseurl'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG . DIRECTORY_SEPARATOR . $name;
     }

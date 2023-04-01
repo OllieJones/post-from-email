@@ -128,8 +128,9 @@ namespace Post_From_Email {
           unset ( $credentials['dkim_checked'] );
         }
       }
-      $credentials['ssl']  = ! ! $credentials['ssl'];
-      $credentials['dkim'] = ! ! $credentials['dkim'];
+      /* These are Boolean */
+      $credentials['ssl']  = ! ! ( isset ( $credentials['ssl'] ) && $credentials['ssl'] );
+      $credentials['dkim'] = ! ! ( isset ( $credentials['dkim'] ) && $credentials['dkim'] );
 
       $credentials['allowlist'] = self::sanitize_email_list( $credentials['allowlist'] );
 
@@ -200,6 +201,10 @@ namespace Post_From_Email {
       $credentials = is_null( $credentials ) ? self::$template_credentials : $credentials;
       $folder      = array_key_exists( 'folder', $credentials ) ? $credentials['folder'] : 'INBOX';
 
+      // todo debugging
+      //$credentials['debug'] = true;
+      //$credentials['disposition'] = 'keep';
+
       if ( 'pop' === $credentials['type'] ) {
 
         $flags    = array();
@@ -211,12 +216,10 @@ namespace Post_From_Email {
         $mailbox          = '{' . $credentials['host'] . ':' . $credentials['port'] . $flags . '}' . $folder;
         $this->connection = @imap_open( $mailbox, $credentials['user'], $credentials['pass'] );
 
+        /* We sometimes get "mailbox is empty" so-called errors */
         $result = @imap_errors();
-        if ( $result ) {
-          if ( $this->connection ) {
-            /* Unknown whether this code path is necessary */
-            $message = __( 'Error opening', 'post-from-email' ) . ' ' . $mailbox;
-          } else {
+        if ( ! $this->connection ) {
+          if ( $result && is_array( $result ) ) {
             $message = __( 'Cannot open', 'post-from-email' ) . ' ' . $mailbox;
           }
           array_unshift( $result, $message );
@@ -251,7 +254,12 @@ namespace Post_From_Email {
      */
     public function list_messages( $sequence = null ) {
       if ( ! $sequence ) {
-        $MC       = @imap_check( $this->connection );
+        $MC = @imap_check( $this->connection );
+        if ( ! $MC ) {
+          $errors = imap_errors();
+
+          return array();
+        }
         $sequence = "1:" . $MC->Nmsgs;
       }
 
@@ -299,8 +307,10 @@ namespace Post_From_Email {
     public function close() {
 
       $flag =
-        isset ( $this->$credentials['disposition'] ) && 'delete' !== $this->$credentials['disposition'] ? CL_EXPUNGE : 0;
+        ! isset ( $this->credentials['disposition'] ) || 'delete' !== $this->credentials['disposition'] ? CL_EXPUNGE : 0;
 
+      /* clear any remaining errors to avoid php warnings on close */
+      @imap_errors();
       @imap_close( $this->connection, $flag );
     }
 
@@ -436,10 +446,11 @@ namespace Post_From_Email {
      * @return Generator A sequence of objects with ->headers, ->html,  ->plain properties.
      */
     public function fetch_all() {
-      if ( $this->login() ) {
+      if ( $this->connection ) {
         $messages = $this->list_messages();
         foreach ( $messages as $message ) {
           $result            = array();
+          $result['msgno']   = $message['msgno'];
           $headers           = $this->fetcheader( $message['msgno'] );
           $result['headers'] = $this->mail_parse_headers( $headers );
           $parts             = $this->mail_mime_to_array( $message['msgno'] );
@@ -457,7 +468,6 @@ namespace Post_From_Email {
             }
           }
           yield $result;
-          $this->dele( $message['msgno'] );
         }
       }
     }
