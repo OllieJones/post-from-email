@@ -21,6 +21,7 @@ namespace Post_From_Email {
     final class Main {
 
       const CLEAN_EVENT_HOOK = POST_FROM_EMAIL_SLUG . '-clean';
+      const CHECK_MAILBOXES_EVENT_HOOK = POST_FROM_EMAIL_SLUG . '-check-mailboxes';
       /**
        * The real instance
        *
@@ -76,9 +77,9 @@ namespace Post_From_Email {
           new Run();
 
           /* TODO testing popping */
-          add_action ('init', function () {
-            //TODO deboog self::$instance->check_mailboxes();
-          });
+          add_action( 'init', function () {
+            //TODO self::$instance->check_mailboxes();
+          } );
           /* require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
            $popper = new Pop_Email();
            foreach ( $popper->fetch_all() as $message ) {
@@ -101,10 +102,17 @@ namespace Post_From_Email {
        */
       private function base_hooks() {
         add_action( 'plugins_loaded', [ self::$instance, 'load_textdomain' ] );
-        /* handle cron cache cleanup */
+        /* Handle the cleanup of the html cache in cron. */
         add_action( self::CLEAN_EVENT_HOOK, array( $this, 'clean_cache_directory' ), 10, 0 );
         if ( ! wp_next_scheduled( self::CLEAN_EVENT_HOOK ) ) {
           wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CLEAN_EVENT_HOOK );
+        }
+        /* Handle polling mailboxes for new posts in cron */
+        if ( false ) {  //TODO debugging.
+          add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ), 10, 0 );
+          if ( ! wp_next_scheduled( self::CHECK_MAILBOXES_EVENT_HOOK ) ) {
+            wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CHECK_MAILBOXES_EVENT_HOOK );
+          }
         }
       }
 
@@ -154,34 +162,39 @@ namespace Post_From_Email {
        *
        * @return void
        */
-      public function check_mailboxes( $batchsize = 3) {
+      public function check_mailboxes( $batchsize = 3 ) {
 
         foreach ( $this->get_active_mailboxes() as $profile => $credentials ) {
           $popper = new Pop_Email();
 
           $login = $popper->login( $credentials );
           if ( true !== $login ) {
-            error_log( $profile->ID . ': Pop_Email login failure: ' . $login );
+            error_log( $profile->ID . ': ' . $credentials['username'] . ': ' . 'Pop_Email login failure: ' . $login );
             continue;
           }
           try {
-            $count     = $batchsize;
+            $count = $batchsize;
             foreach ( $popper->fetch_all() as $email ) {
               if ( 0 === $count -- ) {
                 break;
               }
 
               require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
-              $post   = new Make_Post();
-              $result = $post->process( $email );
-              if ( is_wp_error( $result ) ) {
-                error_log( $profile->ID . ': Pop_Email retrieval failure: ' . $result->get_error_message() );
-              } else {
-                $popper->dele( $email['msgno'] );
+              $post   = new Make_Post( $profile, $credentials );
+              try {
+                $result = $post->process( $email );
+                if ( is_wp_error( $result ) ) {
+                  error_log( $profile->ID . ': ' . $credentials['username'] . ': ' . 'Pop_Email retrieval failure: ' . $result->get_error_message() );
+                } else {
+                  $popper->dele( $email['msgno'] );
+                }
+              } finally {
+                unset ( $post );
               }
             }
           } finally {
             $popper->close();
+            unset ( $popper );
           }
         }
       }

@@ -19,22 +19,39 @@ namespace Post_From_Email {
     protected $namespace;
     private $version;
     private $base;
+    /**
+     * The profile (template)
+     *
+     * @var \WP_POST
+     */
+    private $profile;
+    /**
+     * The credentials array
+     *
+     * @var array
+     */
+    private $credentials;
 
-    public function init() {
-      $this->version   = '1';
-      $this->namespace = POST_FROM_EMAIL_SLUG;
-      $this->base      = 'upload';
+    public function __construct( $profile = null, $credentials = null ) {
+      $this->init( $profile, $credentials );
+    }
+
+    public function init( $profile, $credentials ) {
+      $this->version     = '1';
+      $this->namespace   = POST_FROM_EMAIL_SLUG;
+      $this->base        = 'upload';
+      $this->profile     = $profile;
+      $this->credentials = $credentials;
     }
 
     /**
      * Turn an email object into a post.
      *
-     * @param array         $upload Uploaded email object.
-     * @param \WP_POST|null $profile The creation template.
+     * @param array $upload Uploaded email object.
      *
      * @return string|WP_Error
      */
-    public function process( $upload, $profile = null ) {
+    public function process( $upload ) {
 
       $categories = array();
       $tags       = array();
@@ -43,9 +60,31 @@ namespace Post_From_Email {
                && array_key_exists( 'headers', $upload )
                && array_key_exists( 'html', $upload );
       if ( ! $valid ) {
-        return new WP_Error( 'imap', 'Invalid email upload array' ) ;
+        return new WP_Error( 'imap', 'Invalid email upload array' );
       }
 
+      /* check the allowlist */
+      if ( array_key_exists( 'from', $upload['headers'] ) ) {
+        $from = strtolower( $upload['headers']['from'] );
+      } else {
+        $from = null;
+      }
+      $allowed = $this->sender_in_allowlist( $from );
+
+      if ( ! $allowed ) {
+        /* translators: 1: a sanitized email address */
+        $message = __( 'Sender %1$s not in allowed senders', 'post-from-email' );
+        $message = sprintf( $message, sanitize_email( $from ) );
+
+        return new WP_Error( 'allowlist', $message );
+      }
+
+      $dkim_verified = $this->verify_dkim_signature( $upload['headers'] );
+      if ( ! $dkim_verified ) {
+        $message = __( 'Message is not signed. ', 'post-from-email' );
+
+        return new WP_Error( 'dkim', $message );
+      }
       if ( array_key_exists( 'to', $upload['headers'] ) ) {
         foreach ( $this->get_properties_from_email( imap_utf8( $upload['headers']['to'] ) ) as $category ) {
           $categories [] = $this->maybe_insert_category( $category, $category, $category );
@@ -211,6 +250,52 @@ namespace Post_From_Email {
       }
 
       return $res;
+    }
+
+    /**
+     * Check whether the sender is in the allowlist.
+     *
+     * @param string $sender From address.
+     *
+     * @return bool True if the message should be allowed
+     */
+    private function sender_in_allowlist( string $sender ): bool {
+      $allowed = false;
+      if ( is_array( $this->credentials )
+           && array_key_exists( 'allowlist', $this->credentials )
+           && is_string( $this->credentials['allowlist'] )
+           && strlen( $this->credentials['allowlist'] ) > 0 ) {
+        $allows = explode( "\n", Pop_Email::sanitize_email_list( $this->credentials['allowlist'] ) );
+
+        if ( $sender ) {
+          foreach ( $allows as $allow ) {
+            if ( strlen( $allow ) > 0 ) {
+              if ( str_contains( strtolower( $sender ), strtolower( $allow ) ) ) {
+                return true;
+              }
+            }
+          }
+        }
+      } else {
+        $allowed = true;
+      }
+
+      return $allowed;
+    }
+
+    /**
+     * Verify the DKIM signature if required by the credentials.
+     *
+     * @param array $headers Email headers.
+     *
+     * @return bool Falso if we should reject the message.
+     */
+    private function verify_dkim_signature( $headers ) {
+      if ( array_key_exists( 'dkim', $this->credentials ) && $this->credentials['dkim'] ) {
+        return Pop_Email::verify_dkim_signature( $headers );
+      } else {
+        return true;
+      }
     }
   }
 }

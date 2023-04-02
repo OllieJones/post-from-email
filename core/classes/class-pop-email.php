@@ -187,6 +187,24 @@ namespace Post_From_Email {
     }
 
     /**
+     * Verify the DKIM signature
+     *
+     * @param array $headers The email message headers.
+     *
+     * @return bool
+     * @todo Do this right. https://github.com/pimlie/php-dkim/blob/master/DKIM/Verify.php
+     * @todo Do this as part of message fetch, not later.
+     *
+     */
+    public static function verify_dkim_signature( $headers ) {
+      if ( array_key_exists( 'dkim-signature', $headers ) ) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    /**
      * Open a connection stream to a mailbox.
      *
      * @param array $credentials Associative array of credentials.
@@ -201,11 +219,10 @@ namespace Post_From_Email {
       $credentials = is_null( $credentials ) ? self::$template_credentials : $credentials;
       $folder      = array_key_exists( 'folder', $credentials ) ? $credentials['folder'] : 'INBOX';
 
-      // todo debugging
-      //$credentials['debug'] = true;
-      //$credentials['disposition'] = 'keep';
-
       if ( 'pop' === $credentials['type'] ) {
+        // todo debugging
+        //$credentials['debug'] = true;
+        $credentials['disposition'] = 'keep';
 
         $flags    = array();
         $flags [] = '/pop3';
@@ -227,6 +244,8 @@ namespace Post_From_Email {
         } else {
           $result = true;
         }
+
+        $this->credentials = $credentials;
 
         return $result;
       }
@@ -306,8 +325,11 @@ namespace Post_From_Email {
      */
     public function close() {
 
-      $flag =
-        ! isset ( $this->credentials['disposition'] ) || 'delete' !== $this->credentials['disposition'] ? CL_EXPUNGE : 0;
+      $expunge = true;
+      if ( isset ( $this->credentials['disposition'] ) && 'delete' !== $this->credentials['disposition'] ) {
+        $expunge = false;
+      }
+      $flag = $expunge ? CL_EXPUNGE : 0;
 
       /* clear any remaining errors to avoid php warnings on close */
       @imap_errors();
