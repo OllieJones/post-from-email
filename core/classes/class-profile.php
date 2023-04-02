@@ -127,22 +127,51 @@ namespace Post_From_Email {
    );
 
    remove_meta_box( 'generate_layout_options_meta_box', null, 'side' );
+
   }
 
   /**
    * HTML for the first metabox, usernam, password, all that.
    *
-   * @param WP_Post $post current post.
+   * @param WP_Post  $post current post.
    * @param          $callback_args
    *
    * @return void
    */
   public function credentials_meta_box( $post, $callback_args ) {
 
+
+
+   wp_enqueue_style( 'jquery-ui-theme',
+    POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/jquery-ui.min.css',
+    [],
+    POST_FROM_EMAIL_VERSION );
+
+   wp_enqueue_script( 'jquery-ui-dialog' );
+
    wp_enqueue_style( 'profile-editor',
     POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/profile-editor.css',
     [],
     POST_FROM_EMAIL_VERSION );
+
+   ?>
+   <div id="credentials-help" class="dialog popup" title="<?php esc_html_e ('Mailbox Settings', 'post-from-email') ?>">
+    <p>
+     <?php esc_html_e( 'Post to your site by sending email messages to a dedicated mailbox.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'To do this you need a dedicated mailbox on a convenient email server.', 'post-from-email' ) ?>
+     <?php esc_html_e( '(Many hosting services let you create mailboxes.)', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Then, put that mailbox on the distribution list for your listserv or email marketing service\'s distribution list.', 'post-from-email' ) ?>
+     <?php esc_html_e( '(Constant Contact and Mailchimp are popular services.)', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s  account information here.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Your retrieved posts inherit the categories, tags, and author you set for this template.', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <?php esc_html_e( 'Create one of these templates for each dedicated mailbox you use for posting.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
 
    $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
    if ( ! $credentials ) {
@@ -271,7 +300,7 @@ namespace Post_From_Email {
    * HTML for the second metabox, allowlist and DKIM.
    *
    * @param WP_Post $post current post.
-   * @param array    $callback_args Args given to make_meta_box()
+   * @param array   $callback_args Args given to make_meta_box()
    *
    * @return void
    */
@@ -335,7 +364,7 @@ namespace Post_From_Email {
    * The dynamic portion of the hook name, `$post->post_type`, refers to
    * the post type slug.
    *
-   * @param int      $post_ID Post ID.
+   * @param int     $post_ID Post ID.
    * @param WP_Post $post Post object.
    *
    * @since 3.7.0
@@ -382,20 +411,6 @@ namespace Post_From_Email {
    }
    ?>
    <h3><?php esc_html_e( 'This is a template for retrieving posts from email.', 'post-from-email' ) ?> </h3>
-   <p>
-    <?php esc_html_e( 'Post to your site by sending email messages to a dedicated mailbox.', 'post-from-email' ) ?>
-    <?php esc_html_e( 'To do this you need a dedicated mailbox on a convenient email server.', 'post-from-email' ) ?>
-    <?php esc_html_e( '(Many hosting services let you create mailboxes.)', 'post-from-email' ) ?>
-    <?php esc_html_e( 'Then, put that mailbox on your listserv or email marketing service\'s distribution list.', 'post-from-email' ) ?>
-    <?php esc_html_e( '(Constant Contact and Mailchimp are popular services.)', 'post-from-email' ) ?>
-   </p>
-   <p>
-    <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s  account information here.', 'post-from-email' ) ?>
-    <?php esc_html_e( 'Your retrieved posts inherit the categories, tags, and author you set for this template.', 'post-from-email' ) ?>
-   </p>
-   <p>
-    <?php esc_html_e( 'Create one of these templates for each dedicated mailbox you use for posting.', 'post-from-email' ) ?>
-   </p>
    <p><?php
     echo esc_html(
      sprintf(

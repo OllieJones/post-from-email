@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 20);
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    /* help dialog boxes */
+    jQuery( 'div.postbox div.dialog.popup' ).dialog();
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     const url = '/wp-json/post-from-email/v1/test-credentials'
     const test_button = document.querySelector('td.test_button > div > input#test')

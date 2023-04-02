@@ -53,8 +53,7 @@ namespace Post_From_Email {
      */
     public function process( $upload ) {
 
-      $categories = array();
-      $tags       = array();
+      $tags = array();
 
       $valid = is_array( $upload )
                && array_key_exists( 'headers', $upload )
@@ -90,7 +89,18 @@ namespace Post_From_Email {
           $categories [] = $this->maybe_insert_category( $category, $category, $category );
         }
       }
+
+      $categories = get_the_terms( $this->profile, 'category' );
+      $categories = array_map( function ( $item ) {
+        return $item->term_id;
+      }, $categories );
+
       $categories [] = $this->maybe_insert_category( 'Email', 'Post From Email', 'post-from-email' );
+
+      $tags = get_the_terms( $this->profile, 'post_tag' );
+      $tags = array_map( function ( $item ) {
+        return $item->term_id;
+      }, $tags );
 
       try {
         $doc = new DOMDocument( '1.0', 'utf-8' );
@@ -125,19 +135,20 @@ namespace Post_From_Email {
         $content [] = $meta_key;
         $content [] = '" ';
         $content [] = ']';
-        $post       = [
-          'post_author'    => 1,
+        $post       = array(
+          'post_author'    => $this->profile->post_author,
+          /* TODO make this a number of whole words */
           'post_excerpt'   => substr( $upload['plain'], 0, 160 ),
           'post_date'      => $post_date_local_string,
           'post_date_gmt'  => $post_date_utc_string,
           'post_content'   => implode( '', $content ),
           'post_title'     => $title,
-          'post_status'    => 'private',   //TODO
+          'post_status'    => $this->profile->post_status,
           'post_category'  => $categories,
-          'comment_status' => 'closed',
-          'ping_status'    => 'closed',
+          'comment_status' =>  $this->profile->ping_status,
+          'ping_status'    =>  $this->profile->comment_status,
           'tags_input'     => $tags,
-        ];
+        );
         $id         = wp_insert_post( $post, true, true );
         if ( is_wp_error( $id ) ) {
           return $id;

@@ -78,7 +78,9 @@ namespace Post_From_Email {
 
           /* TODO testing popping */
           add_action( 'init', function () {
-            //TODO self::$instance->check_mailboxes();
+            if (false) {
+              self::$instance->check_mailboxes();
+            }
           } );
           /* require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-pop-email.php';
            $popper = new Pop_Email();
@@ -162,7 +164,7 @@ namespace Post_From_Email {
        *
        * @return void
        */
-      public function check_mailboxes( $batchsize = 3 ) {
+      public function check_mailboxes( $batchsize = 1 ) {
 
         foreach ( $this->get_active_mailboxes() as $profile => $credentials ) {
           $popper = new Pop_Email();
