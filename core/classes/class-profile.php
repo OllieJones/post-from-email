@@ -470,6 +470,9 @@ namespace Post_From_Email {
 
     <p>
      <?php esc_html_e( 'To only accept messages from certain senders, enter their email addresses, one per line, in the Allowed Senders box.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'If you receive messages from two different senders in one mailbox, you can create two different templates like this one.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Put just one sender\'s address in each template.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'If you do this you can apply a diferent template, with different categories and tags, to each sender.', 'post-from-email' ) ?>
     </p>
     <p>
      <?php esc_html_e( 'Many email services authenticate their messages by signing them.', 'post-from-email' ) ?>

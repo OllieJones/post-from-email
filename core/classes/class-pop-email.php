@@ -81,24 +81,6 @@ namespace Post_From_Email {
     }
 
     /**
-     * Verify a nonce embedded in the credentials array.
-     *
-     * @param array $credentials Array of credentials.
-     *
-     * @return bool
-     */
-    public static function verify_nonce( $credentials ) {
-      if ( isset  ( $credentials['nonce'] ) && is_string( $credentials['nonce'] ) && isset ( $credentials['id'] ) && is_numeric( $credentials['id'] ) ) {
-        return 1 === wp_verify_nonce( 'wp_rest' );
-      } else {
-        unset( $credentials['nonce'] );
-        unset( $credentials['id'] );
-
-        return false;
-      }
-    }
-
-    /**
      * Sanitize the email server credential array.
      *
      * @param array $credentials The array to sanitize
@@ -222,7 +204,7 @@ namespace Post_From_Email {
       if ( 'pop' === $credentials['type'] ) {
         // todo debugging
         //$credentials['debug'] = true;
-        $credentials['disposition'] = 'keep';
+        //$credentials['disposition'] = 'keep';
 
         $flags    = array();
         $flags [] = '/pop3';
@@ -505,7 +487,7 @@ namespace Post_From_Email {
         /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
         'Authentication failed'  => esc_attr__( 'Are your Username and Password both correct?', 'post-from-email' ),
         /* translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response' */
-        'connection broken'      => esc_attr__( 'Should you use a secure connection? Is your Port correct?', 'post-from-email' ),
+        'connection broken'      => esc_attr__( 'Your POP Server may be temporarily overload.', 'post-from-email' ),
       );
       foreach ( $errors as $error ) {
         $found = false;

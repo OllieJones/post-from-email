@@ -79,6 +79,7 @@ namespace Post_From_Email {
           /* TODO testing popping */
           add_action( 'init', function () {
             if (false) {
+              /** @noinspection PhpUnreachableStatementInspection */
               self::$instance->check_mailboxes();
             }
           } );
@@ -110,11 +111,9 @@ namespace Post_From_Email {
           wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CLEAN_EVENT_HOOK );
         }
         /* Handle polling mailboxes for new posts in cron */
-        if ( false ) {  //TODO debugging.
-          add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ), 10, 0 );
-          if ( ! wp_next_scheduled( self::CHECK_MAILBOXES_EVENT_HOOK ) ) {
-            wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CHECK_MAILBOXES_EVENT_HOOK );
-          }
+        add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ), 10, 0 );
+        if ( ! wp_next_scheduled( self::CHECK_MAILBOXES_EVENT_HOOK ) ) {
+          wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CHECK_MAILBOXES_EVENT_HOOK );
         }
       }
 
@@ -164,14 +163,20 @@ namespace Post_From_Email {
        *
        * @return void
        */
-      public function check_mailboxes( $batchsize = 1 ) {
+      public function check_mailboxes( $batchsize = 10 ) {
 
         foreach ( $this->get_active_mailboxes() as $profile => $credentials ) {
           $popper = new Pop_Email();
 
+          if ( ! $credentials || ! isset ( $credentials['user']) ) {
+            /** @noinspection PhpUndefinedFieldInspection */
+            error_log( $profile->ID . ': No username.' );
+            continue;
+          }
           $login = $popper->login( $credentials );
           if ( true !== $login ) {
-            error_log( $profile->ID . ': ' . $credentials['username'] . ': ' . 'Pop_Email login failure: ' . $login );
+            /** @noinspection PhpUndefinedFieldInspection */
+            error_log( $profile->ID . ': ' . $credentials['user'] . ': ' . 'Pop_Email login failure: ' . $login );
             continue;
           }
           try {
@@ -186,7 +191,8 @@ namespace Post_From_Email {
               try {
                 $result = $post->process( $email );
                 if ( is_wp_error( $result ) ) {
-                  error_log( $profile->ID . ': ' . $credentials['username'] . ': ' . 'Pop_Email retrieval failure: ' . $result->get_error_message() );
+                  /** @noinspection PhpUndefinedFieldInspection */
+                  error_log( $profile->ID . ': ' . $credentials['user'] . ': ' . 'Pop_Email retrieval failure: ' . $result->get_error_message() );
                 } else {
                   $popper->dele( $email['msgno'] );
                 }
