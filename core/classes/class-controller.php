@@ -62,7 +62,8 @@ namespace Post_From_Email {
       $popper = new Pop_Email();
       $creds  = Pop_Email::sanitize_credentials( $creds );
       $result = $popper->login( $creds );
-      $result = true === $result ? esc_html__( 'Succeeded. Publish or Update to connect.', 'post-from-email' ) : $result;
+      /* Don't localize 'OK' -- Javascript depends on it. */
+      $result = true === $result ? 'OK ' . esc_html__( 'Succeeded. Publish or Update to connect.', 'post-from-email' ) : $result;
 
       return new WP_REST_Response( $result );
     }

@@ -231,15 +231,11 @@ namespace Post_From_Email {
 
         $flags            = implode( '', $flags );
         $mailbox          = '{' . $credentials['host'] . ':' . $credentials['port'] . $flags . '}' . $folder;
-        $this->connection = @imap_open( $mailbox, $credentials['user'], $credentials['pass'] );
+        $this->connection = @imap_open( $mailbox, $credentials['user'], $credentials['pass'], 0, 0 );
 
         /* We sometimes get "mailbox is empty" so-called errors */
-        $result = @imap_errors();
+        $result = $this->localize_imap_errors( $this->explain_map_errors( @imap_errors() ) );
         if ( ! $this->connection ) {
-          if ( $result && is_array( $result ) ) {
-            $message = __( 'Cannot open', 'post-from-email' ) . ' ' . $mailbox;
-          }
-          array_unshift( $result, $message );
           $result = implode( PHP_EOL, array_reverse( $result ) );
         } else {
           $result = true;
@@ -492,6 +488,79 @@ namespace Post_From_Email {
           yield $result;
         }
       }
+    }
+
+    private function explain_map_errors( $errors ) {
+      if ( ! is_array( $errors ) ) {
+        return $errors;
+      }
+      $result     = array();
+      $explainers = array(
+        /* translators: Explanation for the imap error 'No such host as example.com' */
+        'No such host as'        => esc_attr__( 'Is your POP Server correct?', 'post-from-email' ),
+        /* translators: Explanation for the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed' */
+        'SSL negotiation failed' => esc_attr__( 'Should you use a secure connection? Is your Port correct?', 'post-from-email' ),
+        /* translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out' */
+        'Connection timed out'   => esc_attr__( 'Is your Port correct? Is your POP Server correct?', 'post-from-email' ),
+        /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
+        'Authentication failed'  => esc_attr__( 'Are your Username and Password both correct?', 'post-from-email' ),
+        /* translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response' */
+        'connection broken'      => esc_attr__( 'Should you use a secure connection? Is your Port correct?', 'post-from-email' ),
+      );
+      foreach ( $errors as $error ) {
+        $found = false;
+        foreach ( $explainers as $str => $explanation ) {
+          if ( str_contains( $error, $str ) ) {
+            $space = ' ';
+            if ( ! str_ends_with( $error, '.' ) ) {
+              $space = '. ';
+            }
+            $error .= $space . $explanation;
+            $found = true;
+            break;
+          }
+        }
+        if ( $found ) {
+          $result [] = esc_attr__( 'Connection failed', 'post-from-email' ) . '. ' . $error;
+        }
+      }
+
+      return $result;
+    }
+
+    private function localize_imap_errors( $errors ) {
+      if ( ! is_array( $errors ) ) {
+        return $errors;
+      }
+      $result     = array();
+      $localizers = array(
+        /* translators: For the imap error 'No such host as example.com' */
+        'Mailbox is empty'                    => esc_attr__( 'Mailbox is empty', 'post-from-email' ),
+        /* translators: For the imap error 'No such host as example.com' */
+        'No such host as'                     => esc_attr__( 'No such host as', 'post-from-email' ),
+        /* translators: For the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed' */
+        'TLS/SSL failure for'                 => esc_attr__( 'TLS/SSL failure for', 'post-from-email' ),
+        /* translators: For the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed' */
+        'SSL negotiation failed'              => esc_attr__( 'SSL negotiation failed', 'post-from-email' ),
+        /* translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out' */
+        'Can\'t connect to'                   => esc_attr__( 'Cannot connect to', 'post-from-email' ),
+        /* translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out' */
+        'Connection timed out'                => esc_attr__( 'Connection timed out', 'post-from-email' ),
+        /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
+        'Can not authenticate to POP3 server' => esc_attr__( 'Can not authenticate to POP3 server', 'post-from-email' ),
+        /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
+        'Authentication failed'               => esc_attr__( 'Authentication failed', 'post-from-email' ),
+        /* translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response' */
+        'POP3 connection broken in response'  => esc_attr__( 'POP3 connection broken in response', 'post-from-email' ),
+      );
+      foreach ( $errors as $error ) {
+        foreach ( $localizers as $str => $replacement ) {
+          $error = str_replace( $str, $replacement, $error );
+        }
+        $result [] = $error;
+      }
+
+      return $result;
     }
   }
 }

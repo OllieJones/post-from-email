@@ -127,7 +127,6 @@ namespace Post_From_Email {
    );
 
    remove_meta_box( 'generate_layout_options_meta_box', null, 'side' );
-
   }
 
   /**
@@ -139,8 +138,6 @@ namespace Post_From_Email {
    * @return void
    */
   public function credentials_meta_box( $post, $callback_args ) {
-
-
 
    wp_enqueue_style( 'jquery-ui-theme',
     POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/jquery-ui.min.css',
@@ -154,24 +151,11 @@ namespace Post_From_Email {
     [],
     POST_FROM_EMAIL_VERSION );
 
-   ?>
-   <div id="credentials-help" class="dialog popup" title="<?php esc_html_e ('Mailbox Settings', 'post-from-email') ?>">
-    <p>
-     <?php esc_html_e( 'Post to your site by sending email messages to a dedicated mailbox.', 'post-from-email' ) ?>
-     <?php esc_html_e( 'To do this you need a dedicated mailbox on a convenient email server.', 'post-from-email' ) ?>
-     <?php esc_html_e( '(Many hosting services let you create mailboxes.)', 'post-from-email' ) ?>
-     <?php esc_html_e( 'Then, put that mailbox on the distribution list for your listserv or email marketing service\'s distribution list.', 'post-from-email' ) ?>
-     <?php esc_html_e( '(Constant Contact and Mailchimp are popular services.)', 'post-from-email' ) ?>
-    </p>
-    <p>
-     <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s  account information here.', 'post-from-email' ) ?>
-     <?php esc_html_e( 'Your retrieved posts inherit the categories, tags, and author you set for this template.', 'post-from-email' ) ?>
-    </p>
-    <p>
-     <?php esc_html_e( 'Create one of these templates for each dedicated mailbox you use for posting.', 'post-from-email' ) ?>
-    </p>
-   </div>
-   <?php
+   $this->credentials_help_box();
+   $this->submitdiv_help_box();
+   $this->categorydiv_help_box();
+   $this->tagsdiv_help_box();
+   $this->authordiv_help_box();
 
    $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
    if ( ! $credentials ) {
@@ -192,8 +176,6 @@ namespace Post_From_Email {
     }
     $options = implode( PHP_EOL, $options );
     ?>
-    <p><?php esc_html_e( 'When you set up your mailbox, your email hosting provider gives you this information.' ) ?></p>
-    <hr/>
     <input type="hidden" name="credentials[type]" value="<?php echo esc_attr( $credentials['type'] ) ?>"/>
     <input type="hidden" name="credentials[folder]" value="<?php echo esc_attr( $credentials['folder'] ) ?>"/>
     <input type="hidden" name="credentials[posted]" value="<?php echo esc_attr( time() ) ?>"/>
@@ -252,7 +234,7 @@ namespace Post_From_Email {
       </td>
       <td colspan="2">
        <label
-        for="ssl-checked"><?php esc_html_e( 'Always use a secure connection (SSL) when retrieving mail', 'post-from-email' ) ?></label>
+        for="ssl-checked"><?php esc_html_e( 'Use a secure connection (SSL)', 'post-from-email' ) ?></label>
       </td>
      </tr>
 
@@ -311,6 +293,8 @@ namespace Post_From_Email {
     [],
     POST_FROM_EMAIL_VERSION );
 
+   $this->filter_help_box();
+
    $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
    if ( ! is_array( $credentials ) ) {
     $credentials = Pop_Email::$template_credentials;
@@ -322,8 +306,6 @@ namespace Post_From_Email {
    $allowcount = min( 10, max( 4, count( explode( "\n", $allowlist ) ) + 1 ) );
 
    ?>
-   <p><?php esc_html_e( 'These filters help prevent spammers from abusing your mailbox to generate unwanted posts.' ) ?></p>
-   <hr/>
    <table class="credentials">
 
     <tr>
@@ -341,7 +323,7 @@ namespace Post_From_Email {
     <tr>
      <td></td>
      <td>
-      <?php esc_html_e( 'Enter the addresses of email senders you trust to post to your site, one per line.' ); ?>
+      <?php esc_html_e( 'Addresses of trusted email senders, one per line.' ); ?>
      </td>
     </tr>
     <tr>
@@ -351,7 +333,7 @@ namespace Post_From_Email {
      </td>
      <td colspan="2">
       <label
-       for="dkim-checked"><?php esc_html_e( 'Ignore posts unless signed by the sender to prove they\'re not spam (DKIM validation)', 'post-from-email' ) ?></label>
+       for="dkim-checked"><?php esc_html_e( 'Ignore unsigned messages', 'post-from-email' ) ?></label>
      </td>
     </tr>
    </table>
@@ -410,14 +392,14 @@ namespace Post_From_Email {
     return;
    }
    ?>
-   <h3><?php esc_html_e( 'This is a template for retrieving posts from email.', 'post-from-email' ) ?> </h3>
-   <p><?php
-    echo esc_html(
-     sprintf(
-     /* translators: 1: the name of the shortcode */
-      __( 'Don\'t forget to use the [%1$s] shortcode.', 'post-from-email' ),
-      POST_FROM_EMAIL_SLUG
-     ) ) ?> </p>
+   <h3><?php esc_html_e( 'This template retrieves posts from email.', 'post-from-email' ) ?> </h3>
+   <p>
+    <?php esc_html_e( 'Create a template for each dedicated mailbox you use for posting.', 'post-from-email' ) ?>
+    <?php esc_html_e( 'Posts created from email messages are assigned the template\'s attributes (visibility, categories, tags, and author).', 'post-from-email' ) ?>
+    <?php esc_html_e( 'Learn more by clicking each attributes\'s', 'post-from-email' ) ?>
+    <span class="dashicons dashicons-editor-help"></span>
+    <?php esc_html_e( 'icon.', 'post-from-email' ) ?>
+   </p>
    <?php
   }
 
@@ -450,6 +432,108 @@ namespace Post_From_Email {
    //$settings['editor_height'] = 150;
 
    return $settings;
+  }
+
+  private function credentials_help_box() {
+   ?>
+   <div data-target="credentials" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Mailbox Settings', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Get this information from your email service provider.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'You can post to your site by sending messages to a dedicated email address.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'To do this you need a dedicated mailbox on a convenient email server.', 'post-from-email' ) ?>
+     <?php esc_html_e( '(Most hosting services let you create mailboxes.)', 'post-from-email' ) ?>
+     <?php esc_html_e( 'When you set up that mailbox, the email provider gives you this information.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Enter it here.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Then, your site will check email regularly, and create posts from the messages it finds.', 'post-from-email' ) ?>
+
+    </p>
+    <p>
+     <?php esc_html_e( 'Put your dedicated mailbox\'s address on the distribution list for your listserv or email marketing service\'s distribution list.', 'post-from-email' ) ?>
+     <?php esc_html_e( '(Constant Contact and Mailchimp are popular marketing services.)', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s  account information here.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Your retrieved posts inherit the categories, tags, and author you set for this template.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+  private function filter_help_box() {
+   ?>
+   <div data-target="filter" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Message Filter Settings', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Prevent spammers from creating unwanted posts on your site.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'To only accept messages from certain senders, enter their email addresses, one per line, in the Allowed Senders box.', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <?php esc_html_e( 'Many email services authenticate their messages by signing them.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'They use a standard known as DKIM to prove the messages came from them, and not some spammer.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'You can check Ignore messages to reject unsigned messages.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+  private function submitdiv_help_box() {
+   ?>
+   <div data-target="submitdiv" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Publishing and Visibility Settings', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Control whether this template is active, and whether it creates public or private posts.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'To make this template active, and make it check for incoming email messages, Publish it.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Draft and Pending Review templates are not active and do not check for messages.', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <?php esc_html_e( 'The template\'s Visibility affects the created posts. If the template is Public, the posts will be Public. If the template is Private, the posts will also be Private.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+  private function categorydiv_help_box() {
+   ?>
+   <div data-target="categorydiv" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Categories', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Choose the categories for the created posts.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'The categories you choose here are applied to each created post.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+  private function tagsdiv_help_box() {
+   ?>
+   <div data-target="tagsdiv-post_tag" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Tags', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Choose the tags for the created posts.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'The tags you choose here are applied to each created post.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+  private function authordiv_help_box() {
+   ?>
+   <div data-target="authordiv" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Author Setting', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Choose the author for the created posts.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'The author you choose here is assigned to each created post.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
   }
 
  }

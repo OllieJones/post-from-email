@@ -24,16 +24,50 @@ table.credentials > tbody > tr > td.cred > input {
     width: 99%;
 }
 
-table.credentials > tbody > tr > td > div#status_message.failure {
-    border-color: red;
-    border-width: 1px;
+table.credentials > tbody > tr > td > div#status_message {
+    border-width: 2px;
     border-style:ridge;
     padding: 0.5em;
 }
+table.credentials > tbody > tr > td > div#status_message.failure {
+    border-color: red;
+}
 table.credentials > tbody > tr > td > div#status_message.success {
     color: green;
+    border-color: transparent;
+}
+table.credentials > tbody > tr > td > div#status_message.unknown {
+    border-color: transparent;
+    color: transparent;
 }
 
 textarea#allowlist {
-    width: 90%
+    width: 90%;
+    min-width: 22em;
+}
+
+/* Help dialog boxes */
+div#post-body div.postbox div.postbox-header div.help-icon {
+    padding-left: 12px;
+    padding-right: 0;
+    cursor: pointer;
+}
+/* Help dialog boxes */
+div.dialog.popup.help-popup.hidden {
+    display: none;
+    visibility: collapse;
+}
+div#post-body div.postbox div.postbox-header h2.has-help-icon {
+    padding-left: 0.25em;
+}
+div.helpbox.ui-dialog.ui-widget.ui-front {
+    z-index: 5000;
+}
+div.helpbox.ui-dialog.ui-widget > div.ui-dialog-titlebar {
+    background-color: #fff7d7;
+    border-color: #fad163;
+}
+div.helpbox.ui-dialog.ui-widget > div.ui-dialog-content {
+    background-color: #fffdf5;
+    border-color: #fad163;
 }

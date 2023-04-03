@@ -7,11 +7,32 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(poll)
         }
     }, 20);
-});
 
-document.addEventListener('DOMContentLoaded', () => {
-    /* help dialog boxes */
-    jQuery( 'div.postbox div.dialog.popup' ).dialog();
+    /* Configure the help dialog boxes for metaboxes */
+    jQuery('div.dialog.popup.help-popup')
+        .each(function (_) {
+            if (this.dataset.target) {
+                const helpbox  = this
+                jQuery(`div#wpbody div.postbox-container div#${this.dataset.target} > div.postbox-header > h2`)
+                    .each(function (_) {
+                        this.classList.add('has-help-icon')
+                        const link = document.createElement('div')
+                        link.style.float = 'left'
+                        link.classList.add('dashicons', 'dashicons-editor-help', 'help-icon')
+                        const dialog_box = jQuery(helpbox).dialog({
+                            position: { my:'left top', collision:'flipfit', at:'right top', of: this.parentElement},
+                            classes: {'ui-dialog': 'helpbox'},
+                            autoOpen: false
+                        })
+                        helpbox.classList.remove('hidden')
+                        link.addEventListener('click', function(_) {
+                            if (dialog_box.dialog('isOpen')) dialog_box.dialog('close')
+                            else dialog_box.dialog('open')
+                        })
+                        this.before(link)
+                    })
+            }
+        })
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -50,6 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const body = JSON.stringify({...credentials})
             const spinner = document.querySelector('td.test_button > div > span#credential-spinner.spinner');
             spinner && spinner.classList.add('is-active')
+            const status_message = document.querySelector('#status_message')
+            if (status_message) {
+                status_message.classList.add('unknown')
+                status_message.classList.remove('success', 'failure')
+            }
             test_button.disabled = true
             const options = {
                 method: 'POST',
@@ -69,20 +95,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             test_button.disabled = false
             spinner && spinner.classList.remove('is-active')
             if (res.status === 200) {
-                const json = await res.json();
+                const reply = await res.json();
                 const status_message = document.querySelector('#status_message')
                 if (status_message) {
                     status_message.classList.remove('unknown')
                     /* An error message contains newlines */
-                    if (json.includes("\n") || json.includes("\r")) {
-                        const message = json.replace(/[\r\n]+/, '<br/>')
+                    if (! reply.startsWith('OK')) {
                         status_message.classList.add('failure')
-                        status_message.classList.remove('success')
-                        status_message.innerHTML = message
+                        status_message.classList.remove('success', 'unknown')
+                        status_message.innerHTML = reply
                     } else {
+                        const message = reply.replace(/^OK\s*/, '')
                         status_message.classList.add('success')
-                        status_message.classList.remove('failure')
-                        status_message.textContent = json
+                        status_message.classList.remove('failure', 'unknown')
+                        status_message.textContent = message
                     }
                 }
             }
