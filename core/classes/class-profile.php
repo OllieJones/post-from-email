@@ -230,7 +230,7 @@ namespace Post_From_Email {
 
      <tr>
       <td>
-       <label for="ssl-checked" ><?php esc_html_e( 'Connection', 'post-from-email' ) ?>:</label>
+       <label for="ssl-checked"><?php esc_html_e( 'Connection', 'post-from-email' ) ?>:</label>
       </td>
       <td>
        <input type="checkbox" id="ssl-checked"
@@ -245,12 +245,12 @@ namespace Post_From_Email {
        <label for="leave_emails"><?php esc_html_e( 'Messages', 'post-from-email' ) ?>:</label>
       </td>
       <td colspan="2">
-       <select id="leave_emails" name="credentials[disposition]" >
+       <select id="leave_emails" name="credentials[disposition]">
         <option value="0" <?php echo 'delete' === $credentials['disposition'] ? 'selected' : '' ?>>
-         <?php esc_html_e('Remove from POP server after posting', 'post-from-email' ) ?>
+         <?php esc_html_e( 'Remove from POP server after posting', 'post-from-email' ) ?>
         </option>
         <option value="1" <?php echo 'delete' !== $credentials['disposition'] ? 'selected' : '' ?>>
-         <?php esc_html_e('Leave on server (troubleshooting only)', 'post-from-email' ) ?>
+         <?php esc_html_e( 'Leave on server (troubleshooting only)', 'post-from-email' ) ?>
         </option>
        </select>
       </td>
@@ -388,15 +388,14 @@ namespace Post_From_Email {
 
    $credentials = $_POST['credentials'];
 
-   $credentials = Pop_Email::sanitize_credentials( $credentials );
-   $result      = $this->popper->login( $credentials );
+   $credentials           = Pop_Email::sanitize_credentials( $credentials );
+   $result                = $this->popper->login( $credentials );
+   $credentials['status'] = $result;
+   update_post_meta( $post_ID, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
    if ( true === $result ) {
     $this->popper->close();
     Pop_Email::check_mailboxes( 1, $post_ID );
    }
-   $credentials['status'] = $result;
-
-   update_post_meta( $post_ID, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
   }
 
   /**
@@ -480,6 +479,7 @@ namespace Post_From_Email {
    </div>
    <?php
   }
+
   private function filter_help_box() {
    ?>
    <div data-target="filter" class="dialog popup help-popup hidden"
@@ -501,6 +501,7 @@ namespace Post_From_Email {
    </div>
    <?php
   }
+
   private function submitdiv_help_box() {
    ?>
    <div data-target="submitdiv" class="dialog popup help-popup hidden"
@@ -518,6 +519,7 @@ namespace Post_From_Email {
    </div>
    <?php
   }
+
   private function categorydiv_help_box() {
    ?>
    <div data-target="categorydiv" class="dialog popup help-popup hidden"
@@ -531,6 +533,7 @@ namespace Post_From_Email {
    </div>
    <?php
   }
+
   private function tagsdiv_help_box() {
    ?>
    <div data-target="tagsdiv-post_tag" class="dialog popup help-popup hidden"
@@ -544,6 +547,7 @@ namespace Post_From_Email {
    </div>
    <?php
   }
+
   private function authordiv_help_box() {
    ?>
    <div data-target="authordiv" class="dialog popup help-popup hidden"

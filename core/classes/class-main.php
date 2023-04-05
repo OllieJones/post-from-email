@@ -96,7 +96,7 @@ namespace Post_From_Email {
         /* Handle the cleanup of the html cache in cron. */
         add_action( self::CLEAN_EVENT_HOOK, array( $this, 'clean_cache_directory' ), 10, 0 );
         if ( ! wp_next_scheduled( self::CLEAN_EVENT_HOOK ) ) {
-          wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CLEAN_EVENT_HOOK );
+          wp_schedule_event( time() + MINUTE_IN_SECONDS, 'twicedaily', self::CLEAN_EVENT_HOOK );
         }
         /* Handle polling mailboxes for new posts in cron */
         add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ), 10, 0 );
@@ -136,9 +136,6 @@ namespace Post_From_Email {
             if ( ! $path ) {
               $pathname = $dirname . DIRECTORY_SEPARATOR . $file;
               @unlink( $pathname );
-              if ( WP_DEBUG_LOG ) {   //TODO debugging only
-                error_log( POST_FROM_EMAIL_NAME . ': removed cache file ' . $pathname );
-              }
             }
           }
         }

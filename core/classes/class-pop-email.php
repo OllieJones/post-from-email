@@ -566,9 +566,9 @@ namespace Post_From_Email {
       $explainers = array(
         /* translators: Explanation for the imap error 'No such host as example.com' */
         'No such host as'        => esc_attr__( 'Is your POP Server correct?', 'post-from-email' ),
-        /* translators: Explanation for the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed' */
+        /* translators: Explanation for the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed' */
         'SSL negotiation failed' => esc_attr__( 'Should you use a secure connection? Is your Port correct?', 'post-from-email' ),
-        /* translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out' */
+        /* translators: For the imap error 'Can't connect to example.com,1110: Connection timed out' */
         'Connection timed out'   => esc_attr__( 'Is your Port correct? Is your POP Server correct?', 'post-from-email' ),
         /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
         'Authentication failed'  => esc_attr__( 'Are your Username and Password both correct?', 'post-from-email' ),
@@ -606,13 +606,13 @@ namespace Post_From_Email {
         'Mailbox is empty'                    => esc_attr__( 'Mailbox is empty', 'post-from-email' ),
         /* translators: For the imap error 'No such host as example.com' */
         'No such host as'                     => esc_attr__( 'No such host as', 'post-from-email' ),
-        /* translators: For the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed' */
+        /* translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed' */
         'TLS/SSL failure for'                 => esc_attr__( 'TLS/SSL failure for', 'post-from-email' ),
-        /* translators: For the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed' */
+        /* translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed' */
         'SSL negotiation failed'              => esc_attr__( 'SSL negotiation failed', 'post-from-email' ),
-        /* translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out' */
+        /* translators: For the imap error 'Can't connect to example.com,1110: Connection timed out' */
         'Can\'t connect to'                   => esc_attr__( 'Cannot connect to', 'post-from-email' ),
-        /* translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out' */
+        /* translators: For the imap error 'Can't connect to example.com,1110: Connection timed out' */
         'Connection timed out'                => esc_attr__( 'Connection timed out', 'post-from-email' ),
         /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
         'Can not authenticate to POP3 server' => esc_attr__( 'Can not authenticate to POP3 server', 'post-from-email' ),
