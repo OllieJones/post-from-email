@@ -7,7 +7,7 @@ Tags: private
 Requires at least: 5.9
 Tested up to: 6.2
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,6 +38,9 @@ If you want to post emails when they're sent out, POST your them to the REST ser
 You can use the [CloudMailin](https://cloudmailin.com/) service to create a special-purpose email address. Then you can put that email address on your distribution list.
 
 == Changelog ==
+
+= 0.3.1: April 5, 2023
+Keep / Remove setting, squash mojibake bug.
 
 = 0.3.0: April 3, 2023
 POP3 fetching, Templates

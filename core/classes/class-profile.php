@@ -227,14 +227,32 @@ namespace Post_From_Email {
        <select id="port" name="credentials[port]"> <?php echo $options ?></select>
       </td>
      </tr>
+
      <tr>
+      <td>
+       <label for="ssl-checked" ><?php esc_html_e( 'Connection', 'post-from-email' ) ?>:</label>
+      </td>
       <td>
        <input type="checkbox" id="ssl-checked"
               name="credentials[ssl_checked]" <?php echo $credentials['ssl'] ? 'checked' : '' ?>>
-      </td>
-      <td colspan="2">
        <label
         for="ssl-checked"><?php esc_html_e( 'Use a secure connection (SSL)', 'post-from-email' ) ?></label>
+      </td>
+     </tr>
+
+     <tr>
+      <td>
+       <label for="leave_emails"><?php esc_html_e( 'Messages', 'post-from-email' ) ?>:</label>
+      </td>
+      <td colspan="2">
+       <select id="leave_emails" name="credentials[disposition]" >
+        <option value="0" <?php echo 'delete' === $credentials['disposition'] ? 'selected' : '' ?>>
+         <?php esc_html_e('Remove from POP server after posting', 'post-from-email' ) ?>
+        </option>
+        <option value="1" <?php echo 'delete' !== $credentials['disposition'] ? 'selected' : '' ?>>
+         <?php esc_html_e('Leave on server (troubleshooting only)', 'post-from-email' ) ?>
+        </option>
+       </select>
       </td>
      </tr>
 
@@ -374,6 +392,7 @@ namespace Post_From_Email {
    $result      = $this->popper->login( $credentials );
    if ( true === $result ) {
     $this->popper->close();
+    Pop_Email::check_mailboxes( 1, $post_ID );
    }
    $credentials['status'] = $result;
 

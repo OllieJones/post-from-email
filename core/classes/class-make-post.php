@@ -64,7 +64,7 @@ namespace Post_From_Email {
 
       /* check the allowlist */
       if ( array_key_exists( 'from', $upload['headers'] ) ) {
-        $from = strtolower( $upload['headers']['from'] );
+        $from = $upload['headers']['from'];
       } else {
         $from = null;
       }
@@ -73,16 +73,18 @@ namespace Post_From_Email {
       if ( ! $allowed ) {
         /* translators: 1: a sanitized email address */
         $message = __( 'Sender %1$s not in allowed senders', 'post-from-email' );
-        $message = sprintf( $message, sanitize_email( $from ) );
+        $message = sprintf( $message, esc_attr( $from ) );
 
         return new WP_Error( 'allowlist', $message );
       }
 
-      $dkim_verified = $this->verify_dkim_signature( $upload['headers'] );
-      if ( ! $dkim_verified ) {
-        $message = __( 'Message is not signed. ', 'post-from-email' );
+      if ( $this->credentials['dkim'] ) {
+        $dkim_verified = $this->verify_dkim_signature( $upload['headers'] );
+        if ( ! $dkim_verified ) {
+          $message = __( 'Message is not signed. ', 'post-from-email' );
 
-        return new WP_Error( 'dkim', $message );
+          return new WP_Error( 'dkim', $message );
+        }
       }
       if ( array_key_exists( 'to', $upload['headers'] ) ) {
         foreach ( $this->get_properties_from_email( imap_utf8( $upload['headers']['to'] ) ) as $category ) {
@@ -98,15 +100,17 @@ namespace Post_From_Email {
       $categories [] = $this->maybe_insert_category( 'Email', 'Post From Email', 'post-from-email' );
 
       $tags = get_the_terms( $this->profile, 'post_tag' );
+      $tags = is_array( $tags ) ? $tags : array();
       $tags = array_map( function ( $item ) {
         return $item->term_id;
       }, $tags );
 
       try {
-        $doc = new DOMDocument( '1.0', 'utf-8' );
-
+        $doc                     = new DOMDocument( '1.0', 'utf-8' );
         $doc->preserveWhiteSpace = false;
-        @$doc->loadHTML( $upload['html'], LIBXML_NOWARNING );
+
+        $html = mb_convert_encoding( $upload['html'], 'HTML-ENTITIES', "UTF-8" );
+        @$doc->loadHTML( $html, LIBXML_NOWARNING );
 
         $title = $this->getElementContents( $doc, '/html/head/title', '' );
         if ( 0 === strlen( $title ) ) {
@@ -145,8 +149,8 @@ namespace Post_From_Email {
           'post_title'     => $title,
           'post_status'    => $this->profile->post_status,
           'post_category'  => $categories,
-          'comment_status' =>  $this->profile->ping_status,
-          'ping_status'    =>  $this->profile->comment_status,
+          'comment_status' => $this->profile->ping_status,
+          'ping_status'    => $this->profile->comment_status,
           'tags_input'     => $tags,
         );
         $id         = wp_insert_post( $post, true, true );
