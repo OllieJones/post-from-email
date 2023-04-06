@@ -246,10 +246,10 @@ namespace Post_From_Email {
       </td>
       <td colspan="2">
        <select id="leave_emails" name="credentials[disposition]">
-        <option value="0" <?php echo 'delete' === $credentials['disposition'] ? 'selected' : '' ?>>
+        <option value="delete" <?php echo 'delete' === $credentials['disposition'] ? 'selected' : '' ?>>
          <?php esc_html_e( 'Remove from POP server after posting', 'post-from-email' ) ?>
         </option>
-        <option value="1" <?php echo 'delete' !== $credentials['disposition'] ? 'selected' : '' ?>>
+        <option value="keep" <?php echo 'delete' !== $credentials['disposition'] ? 'selected' : '' ?>>
          <?php esc_html_e( 'Leave on server (troubleshooting only)', 'post-from-email' ) ?>
         </option>
        </select>
@@ -394,7 +394,9 @@ namespace Post_From_Email {
    update_post_meta( $post_ID, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
    if ( true === $result ) {
     $this->popper->close();
-    Pop_Email::check_mailboxes( 1, $post_ID );
+    if ( 'publish' === $post->post_status || 'private' === $post->post_status ) {
+     Pop_Email::check_mailboxes( 1, $post_ID );
+    }
    }
   }
 
@@ -445,9 +447,6 @@ namespace Post_From_Email {
     POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/js/profile-editor.js',
     [],
     POST_FROM_EMAIL_VERSION );
-
-   //$settings['textarea_rows'] = 10;
-   //$settings['editor_height'] = 150;
 
    return $settings;
   }

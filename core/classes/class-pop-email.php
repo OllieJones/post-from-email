@@ -573,7 +573,7 @@ namespace Post_From_Email {
         /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
         'Authentication failed'  => esc_attr__( 'Are your Username and Password both correct?', 'post-from-email' ),
         /* translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response' */
-        'connection broken'      => esc_attr__( 'Your POP Server may be temporarily overload.', 'post-from-email' ),
+        'POP3 connection broken'      => esc_attr__( 'Your POP Server may be temporarily overloaded. Try again later.', 'post-from-email' ),
       );
       foreach ( $errors as $error ) {
         $found = false;

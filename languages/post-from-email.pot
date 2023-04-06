@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Post from Email 0.3.1\n"
+"Project-Id-Version: Post from Email 0.3.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-from-email\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-04-05T11:31:38-04:00\n"
+"POT-Creation-Date: 2023-04-06T13:12:16-04:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.6.0\n"
 "X-Domain: post-from-email\n"
@@ -52,12 +52,12 @@ msgstr ""
 msgid "Is your POP Server correct?"
 msgstr ""
 
-#. translators: Explanation for the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed'
+#. translators: Explanation for the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
 #: core/classes/class-pop-email.php:570
 msgid "Should you use a secure connection? Is your Port correct?"
 msgstr ""
 
-#. translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out'
+#. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
 #: core/classes/class-pop-email.php:572
 msgid "Is your Port correct? Is your POP Server correct?"
 msgstr ""
@@ -69,7 +69,7 @@ msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response'
 #: core/classes/class-pop-email.php:576
-msgid "Your POP Server may be temporarily overload."
+msgid "Your POP Server may be temporarily overloaded. Try again later."
 msgstr ""
 
 #: core/classes/class-pop-email.php:592
@@ -86,22 +86,22 @@ msgstr ""
 msgid "No such host as"
 msgstr ""
 
-#. translators: For the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed'
+#. translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
 #: core/classes/class-pop-email.php:610
 msgid "TLS/SSL failure for"
 msgstr ""
 
-#. translators: For the imap error 'TLS/SSL failure for mail.plumislandmedia.net: SSL negotiation failed'
+#. translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
 #: core/classes/class-pop-email.php:612
 msgid "SSL negotiation failed"
 msgstr ""
 
-#. translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out'
+#. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
 #: core/classes/class-pop-email.php:614
 msgid "Cannot connect to"
 msgstr ""
 
-#. translators: For the imap error 'Can't connect to plumislandmedia.net,1110: Connection timed out'
+#. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
 #: core/classes/class-pop-email.php:616
 msgid "Connection timed out"
 msgstr ""
@@ -305,99 +305,99 @@ msgstr ""
 msgid "Ignore unsigned messages"
 msgstr ""
 
-#: core/classes/class-profile.php:414
+#: core/classes/class-profile.php:415
 msgid "This template retrieves posts from email."
 msgstr ""
 
-#: core/classes/class-profile.php:416
+#: core/classes/class-profile.php:417
 msgid "Create a template for each dedicated mailbox you use for posting."
 msgstr ""
 
-#: core/classes/class-profile.php:417
+#: core/classes/class-profile.php:418
 msgid "Posts created from email messages are assigned the template's attributes (visibility, categories, tags, and author)."
 msgstr ""
 
-#: core/classes/class-profile.php:418
+#: core/classes/class-profile.php:419
 msgid "Learn more by clicking each attributes's"
 msgstr ""
 
-#: core/classes/class-profile.php:420
+#: core/classes/class-profile.php:421
 msgid "icon."
 msgstr ""
 
-#: core/classes/class-profile.php:459
+#: core/classes/class-profile.php:457
 msgid "Mailbox Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:464
+#: core/classes/class-profile.php:462
 msgid "You can post to your site by sending messages to a dedicated email address."
 msgstr ""
 
-#: core/classes/class-profile.php:465
+#: core/classes/class-profile.php:463
 msgid "To do this you need a dedicated mailbox on a convenient email server."
 msgstr ""
 
-#: core/classes/class-profile.php:466
+#: core/classes/class-profile.php:464
 msgid "(Most hosting services let you create mailboxes.)"
 msgstr ""
 
-#: core/classes/class-profile.php:467
+#: core/classes/class-profile.php:465
 msgid "When you set up that mailbox, the email provider gives you this information."
 msgstr ""
 
-#: core/classes/class-profile.php:468
+#: core/classes/class-profile.php:466
 msgid "Enter it here."
 msgstr ""
 
-#: core/classes/class-profile.php:469
+#: core/classes/class-profile.php:467
 msgid "Then, your site will check email regularly, and create posts from the messages it finds."
 msgstr ""
 
-#: core/classes/class-profile.php:473
+#: core/classes/class-profile.php:471
 msgid "Put your dedicated mailbox's address on the distribution list for your listserv or email marketing service's distribution list."
 msgstr ""
 
-#: core/classes/class-profile.php:474
+#: core/classes/class-profile.php:472
 msgid "(Constant Contact and Mailchimp are popular marketing services.)"
 msgstr ""
 
-#: core/classes/class-profile.php:477
+#: core/classes/class-profile.php:475
 msgid "To retrieve posts from your email messages, enter the maibox's  account information here."
 msgstr ""
 
-#: core/classes/class-profile.php:478
+#: core/classes/class-profile.php:476
 msgid "Your retrieved posts inherit the categories, tags, and author you set for this template."
 msgstr ""
 
-#: core/classes/class-profile.php:486
+#: core/classes/class-profile.php:485
 msgid "Message Filter Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:491
+#: core/classes/class-profile.php:490
 msgid "To only accept messages from certain senders, enter their email addresses, one per line, in the Allowed Senders box."
 msgstr ""
 
-#: core/classes/class-profile.php:492
+#: core/classes/class-profile.php:491
 msgid "If you receive messages from two different senders in one mailbox, you can create two different templates like this one."
 msgstr ""
 
-#: core/classes/class-profile.php:493
+#: core/classes/class-profile.php:492
 msgid "Put just one sender's address in each template."
 msgstr ""
 
-#: core/classes/class-profile.php:494
+#: core/classes/class-profile.php:493
 msgid "If you do this you can apply a diferent template, with different categories and tags, to each sender."
 msgstr ""
 
-#: core/classes/class-profile.php:497
+#: core/classes/class-profile.php:496
 msgid "Many email services authenticate their messages by signing them."
 msgstr ""
 
-#: core/classes/class-profile.php:498
+#: core/classes/class-profile.php:497
 msgid "They use a standard known as DKIM to prove the messages came from them, and not some spammer."
 msgstr ""
 
-#: core/classes/class-profile.php:499
+#: core/classes/class-profile.php:498
 msgid "You can check Ignore messages to reject unsigned messages."
 msgstr ""
 
@@ -417,26 +417,26 @@ msgstr ""
 msgid "The template's Visibility affects the created posts. If the template is Public, the posts will be Public. If the template is Private, the posts will also be Private."
 msgstr ""
 
-#: core/classes/class-profile.php:524
+#: core/classes/class-profile.php:525
 msgid "Categories"
 msgstr ""
 
-#: core/classes/class-profile.php:529
+#: core/classes/class-profile.php:530
 msgid "The categories you choose here are applied to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:537
+#: core/classes/class-profile.php:539
 msgid "Tags"
 msgstr ""
 
-#: core/classes/class-profile.php:542
+#: core/classes/class-profile.php:544
 msgid "The tags you choose here are applied to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:550
+#: core/classes/class-profile.php:553
 msgid "Author Setting"
 msgstr ""
 
-#: core/classes/class-profile.php:555
+#: core/classes/class-profile.php:558
 msgid "The author you choose here is assigned to each created post."
 msgstr ""
