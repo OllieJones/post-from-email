@@ -66,6 +66,40 @@ namespace Post_From_Email {
 		}
 
 		private function initialize() {
-		}
-	}
+      /* action link for plugins page */
+      add_filter( 'plugin_action_links_' . plugin_basename( POST_FROM_EMAIL_PLUGIN_FILE ), [ $this, 'action_link' ] );
+
+    }
+
+    /**
+     * Filters the list of action links displayed for a specific plugin in the Plugins list table.
+     *
+     * The dynamic portion of the hook name, `$plugin_file`, refers to the path
+     * to the plugin file, relative to the plugins directory.
+     *
+     * @param string[] $actions An array of plugin action links. By default, this can include
+     *                              'activate', 'deactivate', and 'delete'. With Multisite active
+     *                              this can also include 'network_active' and 'network_only' items.
+     * @param string $plugin_file Path to the plugin file relative to the plugins directory.
+     * @param array $plugin_data An array of plugin data. See `get_plugin_data()`
+     *                              and the {@see 'plugin_row_meta'} filter for the list
+     *                              of possible values.
+     * @param string $context The plugin context. By default this can include 'all',
+     *                              'active', 'inactive', 'recently_activated', 'upgrade',
+     *                              'mustuse', 'dropins', and 'search'.
+     *
+     * @since 2.7.0
+     * @since 4.9.0 The 'Edit' link was removed from the list of action links.
+     *
+     * @noinspection PhpDocSignatureInspection
+     * @noinspection GrazieInspection
+     */
+    public function action_link( $actions ) {
+      $mylinks = [
+        '<a id="' . POST_FROM_EMAIL_PROFILE . '" href="' . admin_url( 'edit.php?post_type=' . POST_FROM_EMAIL_PROFILE ) . '">' . __( 'Edit templates' ) . '</a>',
+      ];
+
+      return array_merge( $mylinks, $actions );
+    }
+  }
 }
