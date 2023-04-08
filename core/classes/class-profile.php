@@ -395,7 +395,7 @@ namespace Post_From_Email {
    if ( true === $result ) {
     $this->popper->close();
     if ( 'publish' === $post->post_status || 'private' === $post->post_status ) {
-     Pop_Email::check_mailboxes( 1, $post_ID );
+     Pop_Email::check_mailboxes( 10, $post_ID );
     }
    }
   }

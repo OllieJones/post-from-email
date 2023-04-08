@@ -71,9 +71,6 @@ namespace Post_From_Email {
         try {
           $count = $batchsize;
           foreach ( $popper->fetch_all() as $email ) {
-            if ( 0 === $count -- ) {
-              break;
-            }
 
             require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
             $post   = new Make_Post( $profile, $credentials );
@@ -84,6 +81,10 @@ namespace Post_From_Email {
                 error_log( $profile->ID . ': ' . $credentials['user'] . ': ' . 'Pop_Email retrieval failure: ' . $result->get_error_message() );
               } else {
                 $popper->dele( $email['msgno'] );
+              }
+              /* Stop when batch size reached. */
+              if ( 0 === $count -- ) {
+                break;
               }
             } finally {
               unset ( $post );

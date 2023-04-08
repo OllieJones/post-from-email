@@ -53,8 +53,6 @@ namespace Post_From_Email {
      */
     public function process( $upload ) {
 
-      $tags = array();
-
       $valid = is_array( $upload )
                && array_key_exists( 'headers', $upload )
                && array_key_exists( 'html', $upload );
