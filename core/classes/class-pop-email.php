@@ -173,14 +173,20 @@ namespace Post_From_Email {
      */
     public static function sanitize_credentials( $credentials ) {
 
-      unset ( $credentials['nonce'] );
-      unset ( $credentials['id'] );
       if ( ! array_key_exists('disposition', $credentials) || ! is_string($credentials['disposition'])) {
         $credentials['disposition'] = 'delete';
       } else {
         /* This setting should be 'keep' or 'delete' */
         $credentials['disposition'] = 'delete' === $credentials['disposition'] ? 'delete'  : 'keep';
       }
+
+      if ( ! array_key_exists('webhook', $credentials) || ! is_string($credentials['webhook'])) {
+        $credentials['webhook'] = 'deny';
+      } else {
+        /* This setting should be 'allow' or 'deny' */
+        $credentials['webhook'] = 'allow' === $credentials['webhook'] ? 'allow'  : 'deny';
+      }
+
       $credentials['host'] = self::sanitize_hostname( $credentials['host'] );
       $credentials['port'] = intval( $credentials['port'] );
 

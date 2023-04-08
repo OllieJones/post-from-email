@@ -32,6 +32,10 @@ namespace Post_From_Email {
      */
     private $credentials;
 
+    /**
+     * @param array $profile The profile custom post to use as a template.
+     * @param array $credentials The mailbox-access credentials.
+     */
     public function __construct( $profile = null, $credentials = null ) {
       $this->init( $profile, $credentials );
     }
@@ -84,7 +88,7 @@ namespace Post_From_Email {
           return new WP_Error( 'dkim', $message );
         }
       }
-      if ( array_key_exists( 'to', $upload['headers'] ) ) {
+      if ( false && array_key_exists( 'to', $upload['headers'] ) ) {  //TODO plus addressing?
         foreach ( $this->get_properties_from_email( imap_utf8( $upload['headers']['to'] ) ) as $category ) {
           $categories [] = $this->maybe_insert_category( $category, $category, $category );
         }
@@ -155,8 +159,8 @@ namespace Post_From_Email {
         if ( is_wp_error( $id ) ) {
           return $id;
         }
-
         update_post_meta( $id, $meta_key, $doc->saveHTML(), 'post' );
+        $this->update_links ($id, $this->profile->ID);
       } catch ( Exception $ex ) {
         return new WP_Error( 'imap', $ex->getMessage() );
       }
@@ -309,6 +313,26 @@ namespace Post_From_Email {
       } else {
         return true;
       }
+    }
+
+    /**
+     * Use metadata to link the post to the profile responsible for its creation.
+     *
+     * @param $post_id
+     * @param $profile_id
+     *
+     * @return void
+     */
+    private function update_links ( $post_id, $profile_id) {
+
+      $my_profile_key = POST_FROM_EMAIL_SLUG . '-profile';
+      update_post_meta($post_id, $my_profile_key, $profile_id);
+
+      $my_posts_key = POST_FROM_EMAIL_SLUG . '-posts';
+      $myposts = get_post_meta ($profile_id, $my_posts_key, true);
+      $myposts = is_array ($myposts) ? $myposts : array();
+      $myposts [] = $post_id;
+      update_post_meta($profile_id, $my_posts_key, $myposts);
     }
   }
 }

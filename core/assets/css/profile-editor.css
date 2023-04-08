@@ -3,11 +3,13 @@ Backend related CSS
 -----------------*/
 
 /* make it look like Gmail's POP credentials box */
-div#credentials, div#filter {
+div#credentials, div#filter, div#webhook {
     background-color: #fff7d7;
     border-color: #fad163;
 }
-div#credentials > div.postbox-header, div#filter > div.postbox-header {
+div#credentials > div.postbox-header,
+div#filter > div.postbox-header,
+div#webhook > div.postbox-header {
     background-color: #fad163;
     border-color: #fad163;
 }

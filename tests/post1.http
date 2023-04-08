@@ -1,6 +1,6 @@
 POST http://pim.lan.plumislandmedia.net/wp-json/post-from-email/v1/test-credentials
 Content-Type: application/json
-Authorization: Basic admin EYtvQkcwgXPdi9JdzSjEgmyV1
+Authorization: Basic admin z1RH0gURrGxuE5j9FgICUDCw
 
 {"type":"pop","folder":"INBOX","id":"28327","nonce":"c0426161c2","address":"user@example.com","user":"user@mail.example.com","pass":"secret","host":"mail.example.com","ssl_checked":"on","dkim_checked":"on","allowlist":"happy@example.com\\ntrusted@example.com"}
 ###
@@ -14,6 +14,7 @@ Authorization: Basic admin EYtvQkcwgXPdi9JdzSjEgmyV
 ###
 POST http://pim.lan.plumislandmedia.net/wp-json/post-from-email/v1/upload
 Content-Type: application/json
+Authorization: Basic admin EYtvQkcwgXPdi9JdzSjEgmyV
 
 {
   "headers": {

@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Post from Email 0.3.2\n"
+"Project-Id-Version: Post from Email 0.3.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-from-email\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-04-06T13:33:09-04:00\n"
+"POT-Creation-Date: 2023-04-08T12:45:59-04:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.6.0\n"
 "X-Domain: post-from-email\n"
@@ -34,90 +34,90 @@ msgstr ""
 msgid "https://github.com/OllieJones"
 msgstr ""
 
-#: core/classes/class-controller.php:66
+#: core/classes/class-controller.php:75
 msgid "Succeeded. Publish or Update to connect."
 msgstr ""
 
 #. translators: 1: a sanitized email address
-#: core/classes/class-make-post.php:75
+#: core/classes/class-make-post.php:77
 msgid "Sender %1$s not in allowed senders"
 msgstr ""
 
-#: core/classes/class-make-post.php:84
+#: core/classes/class-make-post.php:86
 msgid "Message is not signed. "
 msgstr ""
 
 #. translators: Explanation for the imap error 'No such host as example.com'
-#: core/classes/class-pop-email.php:568
+#: core/classes/class-pop-email.php:577
 msgid "Is your POP Server correct?"
 msgstr ""
 
 #. translators: Explanation for the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
-#: core/classes/class-pop-email.php:570
+#: core/classes/class-pop-email.php:579
 msgid "Should you use a secure connection? Is your Port correct?"
 msgstr ""
 
 #. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
-#: core/classes/class-pop-email.php:572
+#: core/classes/class-pop-email.php:581
 msgid "Is your Port correct? Is your POP Server correct?"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.'
-#: core/classes/class-pop-email.php:574
+#: core/classes/class-pop-email.php:583
 msgid "Are your Username and Password both correct?"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response'
-#: core/classes/class-pop-email.php:576
+#: core/classes/class-pop-email.php:585
 msgid "Your POP Server may be temporarily overloaded. Try again later."
 msgstr ""
 
-#: core/classes/class-pop-email.php:592
+#: core/classes/class-pop-email.php:601
 msgid "Connection failed"
 msgstr ""
 
 #. translators: For the imap error 'No such host as example.com'
-#: core/classes/class-pop-email.php:606
+#: core/classes/class-pop-email.php:615
 msgid "Mailbox is empty"
 msgstr ""
 
 #. translators: For the imap error 'No such host as example.com'
-#: core/classes/class-pop-email.php:608
+#: core/classes/class-pop-email.php:617
 msgid "No such host as"
 msgstr ""
 
 #. translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
-#: core/classes/class-pop-email.php:610
+#: core/classes/class-pop-email.php:619
 msgid "TLS/SSL failure for"
 msgstr ""
 
 #. translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
-#: core/classes/class-pop-email.php:612
+#: core/classes/class-pop-email.php:621
 msgid "SSL negotiation failed"
 msgstr ""
 
 #. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
-#: core/classes/class-pop-email.php:614
+#: core/classes/class-pop-email.php:623
 msgid "Cannot connect to"
 msgstr ""
 
 #. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
-#: core/classes/class-pop-email.php:616
+#: core/classes/class-pop-email.php:625
 msgid "Connection timed out"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.'
-#: core/classes/class-pop-email.php:618
+#: core/classes/class-pop-email.php:627
 msgid "Can not authenticate to POP3 server"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.'
-#: core/classes/class-pop-email.php:620
+#: core/classes/class-pop-email.php:629
 msgid "Authentication failed"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response'
-#: core/classes/class-pop-email.php:622
+#: core/classes/class-pop-email.php:631
 msgid "POP3 connection broken in response"
 msgstr ""
 
@@ -229,67 +229,71 @@ msgid "Your dedicated mailbox's settings"
 msgstr ""
 
 #: core/classes/class-profile.php:121
+msgid "Your incoming webhook settings"
+msgstr ""
+
+#: core/classes/class-profile.php:131
 msgid "Your incoming message filter settings"
 msgstr ""
 
-#: core/classes/class-profile.php:171
+#: core/classes/class-profile.php:176
 msgid "--Choose--"
 msgstr ""
 
-#: core/classes/class-profile.php:186
+#: core/classes/class-profile.php:191
 msgid "Email address"
 msgstr ""
 
-#: core/classes/class-profile.php:196
+#: core/classes/class-profile.php:201
 msgid "Username"
 msgstr ""
 
-#: core/classes/class-profile.php:206
-#: core/classes/class-profile.php:210
+#: core/classes/class-profile.php:211
+#: core/classes/class-profile.php:215
 msgid "Password"
 msgstr ""
 
-#: core/classes/class-profile.php:217
+#: core/classes/class-profile.php:222
 msgid "POP Server"
 msgstr ""
 
-#: core/classes/class-profile.php:221
+#: core/classes/class-profile.php:226
 msgid "POP3 server host name"
 msgstr ""
 
-#: core/classes/class-profile.php:226
+#: core/classes/class-profile.php:231
 msgid "Port"
 msgstr ""
 
-#: core/classes/class-profile.php:233
+#: core/classes/class-profile.php:238
 msgid "Connection"
 msgstr ""
 
-#: core/classes/class-profile.php:239
+#: core/classes/class-profile.php:244
 msgid "Use a secure connection (SSL)"
 msgstr ""
 
-#: core/classes/class-profile.php:245
+#: core/classes/class-profile.php:250
 msgid "Messages"
 msgstr ""
 
-#: core/classes/class-profile.php:250
+#: core/classes/class-profile.php:255
 msgid "Remove from POP server after posting"
 msgstr ""
 
-#: core/classes/class-profile.php:253
+#: core/classes/class-profile.php:258
 msgid "Leave on server (troubleshooting only)"
 msgstr ""
 
-#: core/classes/class-profile.php:268
+#: core/classes/class-profile.php:273
 msgid "Test"
 msgstr ""
 
-#: core/classes/class-profile.php:275
+#: core/classes/class-profile.php:280
 msgid "Connected"
 msgstr ""
 
-#: core/classes/class-profile.php:294
+#: core/classes/class-profile.php:299
 msgid "This mailbox access protocol is not supported"
 msgstr ""
 
@@ -305,138 +309,179 @@ msgstr ""
 msgid "Ignore unsigned messages"
 msgstr ""
 
-#: core/classes/class-profile.php:415
+#: core/classes/class-profile.php:380
+msgid "Posting from webhook"
+msgstr ""
+
+#: core/classes/class-profile.php:385
+msgid "Disabled"
+msgstr ""
+
+#: core/classes/class-profile.php:388
+msgid "Enabled"
+msgstr ""
+
+#: core/classes/class-profile.php:451
 msgid "This template retrieves posts from email."
 msgstr ""
 
-#: core/classes/class-profile.php:417
+#: core/classes/class-profile.php:453
 msgid "Create a template for each dedicated mailbox you use for posting."
 msgstr ""
 
-#: core/classes/class-profile.php:418
+#: core/classes/class-profile.php:454
 msgid "Posts created from email messages are assigned the template's attributes (visibility, categories, tags, and author)."
 msgstr ""
 
-#: core/classes/class-profile.php:419
+#: core/classes/class-profile.php:455
 msgid "Learn more by clicking each attributes's"
 msgstr ""
 
-#: core/classes/class-profile.php:421
+#: core/classes/class-profile.php:457
 msgid "icon."
 msgstr ""
 
-#: core/classes/class-profile.php:457
+#: core/classes/class-profile.php:493
 msgid "Mailbox Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:462
+#: core/classes/class-profile.php:498
 msgid "You can post to your site by sending messages to a dedicated email address."
 msgstr ""
 
-#: core/classes/class-profile.php:463
+#: core/classes/class-profile.php:499
 msgid "To do this you need a dedicated mailbox on a convenient email server."
 msgstr ""
 
-#: core/classes/class-profile.php:464
+#: core/classes/class-profile.php:500
 msgid "(Most hosting services let you create mailboxes.)"
 msgstr ""
 
-#: core/classes/class-profile.php:465
+#: core/classes/class-profile.php:501
 msgid "When you set up that mailbox, the email provider gives you this information."
 msgstr ""
 
-#: core/classes/class-profile.php:466
+#: core/classes/class-profile.php:502
 msgid "Enter it here."
 msgstr ""
 
-#: core/classes/class-profile.php:467
+#: core/classes/class-profile.php:503
 msgid "Then, your site will check email regularly, and create posts from the messages it finds."
 msgstr ""
 
-#: core/classes/class-profile.php:471
+#: core/classes/class-profile.php:507
 msgid "Put your dedicated mailbox's address on the distribution list for your listserv or email marketing service's distribution list."
 msgstr ""
 
-#: core/classes/class-profile.php:472
+#: core/classes/class-profile.php:508
 msgid "(Constant Contact and Mailchimp are popular marketing services.)"
 msgstr ""
 
-#: core/classes/class-profile.php:475
+#: core/classes/class-profile.php:511
 msgid "To retrieve posts from your email messages, enter the maibox's  account information here."
 msgstr ""
 
-#: core/classes/class-profile.php:476
+#: core/classes/class-profile.php:512
 msgid "Your retrieved posts inherit the categories, tags, and author you set for this template."
 msgstr ""
 
-#: core/classes/class-profile.php:485
+#: core/classes/class-profile.php:521
 msgid "Message Filter Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:490
+#: core/classes/class-profile.php:526
 msgid "To only accept messages from certain senders, enter their email addresses, one per line, in the Allowed Senders box."
 msgstr ""
 
-#: core/classes/class-profile.php:491
+#: core/classes/class-profile.php:527
 msgid "If you receive messages from two different senders in one mailbox, you can create two different templates like this one."
 msgstr ""
 
-#: core/classes/class-profile.php:492
+#: core/classes/class-profile.php:528
 msgid "Put just one sender's address in each template."
 msgstr ""
 
-#: core/classes/class-profile.php:493
+#: core/classes/class-profile.php:529
 msgid "If you do this you can apply a diferent template, with different categories and tags, to each sender."
 msgstr ""
 
-#: core/classes/class-profile.php:496
+#: core/classes/class-profile.php:532
 msgid "Many email services authenticate their messages by signing them."
 msgstr ""
 
-#: core/classes/class-profile.php:497
+#: core/classes/class-profile.php:533
 msgid "They use a standard known as DKIM to prove the messages came from them, and not some spammer."
 msgstr ""
 
-#: core/classes/class-profile.php:498
+#: core/classes/class-profile.php:534
 msgid "You can check Ignore messages to reject unsigned messages."
 msgstr ""
 
-#: core/classes/class-profile.php:507
+#: core/classes/class-profile.php:543
+msgid "Webhook settings"
+msgstr ""
+
+#: core/classes/class-profile.php:548
+msgid "You can use an email-to-webhook service to deliver messages to your server."
+msgstr ""
+
+#: core/classes/class-profile.php:551
+msgid "This is a good choice if your email provider blocks incoming messages or is unreliable in some other way."
+msgstr ""
+
+#: core/classes/class-profile.php:555
+msgid "Configure your service to POST incoming emails to this API"
+msgstr ""
+
+#: core/classes/class-profile.php:559
+msgid "Configure your service to use basic authentication."
+msgstr ""
+
+#. translators: 1 WordPress login name
+#: core/classes/class-profile.php:562
+msgid "Use your username (%s) and"
+msgstr ""
+
+#: core/classes/class-profile.php:568
+msgid "Remove the spaces from your application password before using it."
+msgstr ""
+
+#: core/classes/class-profile.php:577
 msgid "Publishing and Visibility Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:512
+#: core/classes/class-profile.php:582
 msgid "To make this template active, and make it check for incoming email messages, Publish it."
 msgstr ""
 
-#: core/classes/class-profile.php:513
+#: core/classes/class-profile.php:583
 msgid "Draft and Pending Review templates are not active and do not check for messages."
 msgstr ""
 
-#: core/classes/class-profile.php:516
+#: core/classes/class-profile.php:586
 msgid "The template's Visibility affects the created posts. If the template is Public, the posts will be Public. If the template is Private, the posts will also be Private."
 msgstr ""
 
-#: core/classes/class-profile.php:525
+#: core/classes/class-profile.php:595
 msgid "Categories"
 msgstr ""
 
-#: core/classes/class-profile.php:530
+#: core/classes/class-profile.php:600
 msgid "The categories you choose here are applied to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:539
+#: core/classes/class-profile.php:609
 msgid "Tags"
 msgstr ""
 
-#: core/classes/class-profile.php:544
+#: core/classes/class-profile.php:614
 msgid "The tags you choose here are applied to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:553
+#: core/classes/class-profile.php:623
 msgid "Author Setting"
 msgstr ""
 
-#: core/classes/class-profile.php:558
+#: core/classes/class-profile.php:628
 msgid "The author you choose here is assigned to each created post."
 msgstr ""

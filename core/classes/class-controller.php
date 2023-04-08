@@ -3,6 +3,7 @@
 namespace Post_From_Email {
 
   use WP_Error;
+  use WP_Query;
   use WP_REST_Controller;
   use WP_REST_Request;
   use WP_REST_Response;
@@ -41,10 +42,27 @@ namespace Post_From_Email {
       require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
       $upload = $req->get_json_params();
 
-      $make     = new Make_Post();
-      $response = $make->process( $upload );
+      $saved_response = null;
+      foreach ( $this->get_active_mailboxes() as $profile => $credentials){
+        $make     = new Make_Post( $profile, $credentials);
+        $response = $make->process( $upload);
+        if (! is_wp_error( $response )) {
+          return $response;
+        }
+        $saved_response = $response;
+      }
 
-      return is_wp_error( $response ) ? $response : new WP_REST_Response( $response );
+      $err = new WP_Error();
+      if ($saved_response) {
+        $err->add(400, $saved_response->get_error_message(), array('status'=> 400));
+      } else {
+        if (WP_DEBUG) {
+          $err->add( 400, 'no webhook-enabled profiles', array( 'status' => 400 ) );
+        }else {
+          $err->add( 401, '', array( 'status' => 401 ) );
+        }
+      }
+      return $err;
     }
 
     /**
@@ -97,6 +115,35 @@ namespace Post_From_Email {
         ] );
       } );
     }
+
+    /**
+     * Encapsulate the WP_Query to get a usable profile.
+     * @return \Generator
+     */
+    private function get_active_mailboxes() {
+      $args     = array(
+        'post_type' => POST_FROM_EMAIL_PROFILE,
+        'status'    => array( 'publish', 'private' ),
+      );
+      $profiles = new WP_Query( $args );
+      try {
+        if ( $profiles->have_posts() ) {
+          while ( $profiles->have_posts() ) {
+            $profiles->the_post();
+
+            $profile     = get_post();
+            $credentials = get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
+            if ( is_array( $credentials ) && 'allow' === $credentials['webhook'] )  {
+              yield $profile => $credentials;
+            }
+          }
+        }
+      } finally {
+        wp_reset_postdata();
+      }
+    }
+
+
 
   }
 }

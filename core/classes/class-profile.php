@@ -117,6 +117,16 @@ namespace Post_From_Email {
    );
 
    add_meta_box(
+    'webhook',
+    __( 'Your incoming webhook settings', 'post-from-email' ),
+    array( $this, 'webhook_meta_box' ),
+    null,
+    'advanced', /* advanced|normal|side */
+    'default',
+    array()
+   );
+
+   add_meta_box(
     'filter',
     __( 'Your incoming message filter settings', 'post-from-email' ),
     array( $this, 'filter_meta_box' ),
@@ -157,12 +167,7 @@ namespace Post_From_Email {
    $this->tagsdiv_help_box();
    $this->authordiv_help_box();
 
-   $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
-   if ( ! $credentials ) {
-    $credentials = Pop_Email::$template_credentials;
-   }
-
-   $credentials = Pop_Email::sanitize_credentials( $credentials );
+   $credentials = $this->getCredentials( $post );
 
    if ( 'pop' === $credentials ['type'] ) {
     $possible_ports = Pop_Email::get_possible_ports( $credentials );
@@ -297,7 +302,7 @@ namespace Post_From_Email {
   }
 
   /**
-   * HTML for the second metabox, allowlist and DKIM.
+   * HTML for the third metabox, allowlist and DKIM.
    *
    * @param WP_Post $post current post.
    * @param array   $callback_args Args given to make_meta_box()
@@ -313,12 +318,7 @@ namespace Post_From_Email {
 
    $this->filter_help_box();
 
-   $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
-   if ( ! is_array( $credentials ) ) {
-    $credentials = Pop_Email::$template_credentials;
-   }
-
-   $credentials = Pop_Email::sanitize_credentials( $credentials );
+   $credentials = $this->getCredentials( $post );
 
    $allowlist  = Pop_Email::sanitize_email_list( $credentials['allowlist'] );
    $allowcount = min( 10, max( 4, count( explode( "\n", $allowlist ) ) + 1 ) );
@@ -352,6 +352,42 @@ namespace Post_From_Email {
      <td colspan="2">
       <label
        for="dkim-checked"><?php esc_html_e( 'Ignore unsigned messages', 'post-from-email' ) ?></label>
+     </td>
+    </tr>
+   </table>
+   <?php
+  }
+
+  /**
+   * HTML for the second metabox, allowlist and DKIM.
+   *
+   * @param WP_Post $post current post.
+   * @param array   $callback_args Args given to make_meta_box()
+   *
+   * @return void
+   */
+  public function webhook_meta_box( $post, $callback_args ) {
+
+   $this->webhook_help_box();
+
+   $credentials = $this->getCredentials( $post );
+
+   ?>
+   <table class="webhook">
+
+    <tr>
+     <td>
+      <label for="webhookallowed"><?php esc_html_e( 'Posting from webhook', 'post-from-email' ) ?>:</label>
+     </td>
+     <td colspan="2">
+      <select id="webhookallowed" name="credentials[webhook]">
+       <option value="deny" <?php echo 'deny' !== $credentials['webhook'] ? 'selected' : '' ?>>
+        <?php esc_html_e( 'Disabled', 'post-from-email' ) ?>
+       </option>
+       <option value="allow" <?php echo 'allow' === $credentials['webhook'] ? 'selected' : '' ?>>
+        <?php esc_html_e( 'Enabled', 'post-from-email' ) ?>
+       </option>
+      </select>
      </td>
     </tr>
    </table>
@@ -501,6 +537,42 @@ namespace Post_From_Email {
    <?php
   }
 
+  private function webhook_help_box() {
+   ?>
+   <div data-target="webhook" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Webhook settings', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'Allow posting via an incoming webhook.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'You can use an email-to-webhook service to deliver messages to your server.', 'post-from-email' ) ?>
+     <a href="https://CloudMailin.com/" target="_blank">CloudMailin.com</a>
+     <?php esc_html_e( 'provides this service.' ) ?>
+     <?php esc_html_e( 'This is a good choice if your email provider blocks incoming messages or is unreliable in some other way.', 'post-from-email' ) ?>
+
+    </p>
+    <p>
+     <?php esc_html_e( 'Configure your service to POST incoming emails to this API', 'post-from-email' ) ?>:
+     <code><?php
+      echo get_rest_url( null, POST_FROM_EMAIL_SLUG . '/v1/upload' ) ;
+      ?></code>.
+    </p>
+    <p>
+     <?php esc_html_e( 'Configure your service to use basic authentication.', 'post-from-email' ) ?>
+     <?php
+     /* translators: 1 WordPress login name */
+     $prompt = __( 'Use your username (%s) and', 'post-from-email' );
+     $user   = wp_get_current_user();
+     echo esc_html( sprintf( $prompt, $user->user_login ) );
+     ?>
+     <a href="<?php echo admin_url( 'profile.php#application-passwords-section' ) ?>"
+        target="_blank"><?php esc_html_e( 'an application password.' ) ?></a>.
+     <?php esc_html_e( 'Remove the spaces from your application password before using it.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+
   private function submitdiv_help_box() {
    ?>
    <div data-target="submitdiv" class="dialog popup help-popup hidden"
@@ -559,6 +631,22 @@ namespace Post_From_Email {
     </p>
    </div>
    <?php
+  }
+
+  /**
+   * Retrieve the email service creds associated with this current profile.
+   *
+   * @param WP_Post $post
+   *
+   * @return array Credentials array.
+   */
+  private function getCredentials( WP_Post $post ): array {
+   $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
+   if ( ! is_array( $credentials ) ) {
+    $credentials = Pop_Email::$template_credentials;
+   }
+
+   return Pop_Email::sanitize_credentials( $credentials );
   }
 
  }
