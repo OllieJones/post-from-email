@@ -216,7 +216,11 @@ namespace Post_From_Email {
       $tag = $doc->createElement( 'script' );
       $tag->setAttribute( 'src', $src );
       $body = ( new \DOMXpath( $doc ) )->query( '/html/body' );
-      $body[0]->appendChild( $tag );
+      if ( count( $body ) > 0 ) {
+        $body[0]->appendChild( $tag );
+      } else {
+        $doc->appendChild( $tag );
+      }
     }
 
     /**

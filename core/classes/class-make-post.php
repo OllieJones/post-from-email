@@ -9,10 +9,24 @@ namespace Post_From_Email {
   use Exception;
   use Generator;
   use WP_Error;
-  use WP_REST_Request;
-  use WP_REST_Response;
+  use WP_Post;
 
   class Make_Post {
+
+    const OK_MESSAGE = 128;
+    const INVALID_MESSAGE = 1;
+    const MISSING_SIGNATURE = 2;
+    const INVALID_SIGNATURE = 3;
+    const FROM_NOT_IN_ALLOWLIST = 4;
+    const SOURCE_NOT_IN_ALLOWLIST = 5;
+    const POST_CREATION_FAILURE = 6;
+    const POST_CREATION_EXCEPTION = 7;
+    /**
+     * The log item.
+     *
+     * @var Log_Post
+     */
+    public $log_item;
     /**
      * @var mixed|string
      */
@@ -31,42 +45,64 @@ namespace Post_From_Email {
      * @var array
      */
     private $credentials;
+    /**
+     * The uploaded email message
+     *
+     * @var array
+     */
+    private $upload;
+    /**
+     * The results of tests, etc.
+     *
+     * @var array
+     */
+    private $result = array();
 
     /**
-     * @param array $profile The profile custom post to use as a template.
-     * @param array $credentials The mailbox-access credentials.
+     * @param array        $upload The uploaded email message.
+     * @param WP_POST|null $profile The profile custom post to use as a template.
+     * @param array|null   $credentials The mailbox-access credentials.
      */
-    public function __construct( $profile = null, $credentials = null ) {
-      $this->init( $profile, $credentials );
+    public function __construct( array $upload, WP_POST $profile = null, array $credentials = null ) {
+      require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-log-post.php';
+      $this->init( $upload, $profile, $credentials );
+      $this->log_item         = new Log_Post( $profile->ID );
+      $this->log_item->source = $credentials['host'];
     }
 
-    public function init( $profile, $credentials ) {
+    public function init( $upload, $profile, $credentials ) {
       $this->version     = '1';
       $this->namespace   = POST_FROM_EMAIL_SLUG;
       $this->base        = 'upload';
+      $this->upload      = $upload;
       $this->profile     = $profile;
       $this->credentials = $credentials;
     }
 
     /**
-     * Turn an email object into a post.
-     *
-     * @param array $upload Uploaded email object.
-     *
-     * @return string|WP_Error
+     * Check that an email object passes filters, etc.
      */
-    public function process( $upload ) {
-
-      $valid = is_array( $upload )
-               && array_key_exists( 'headers', $upload )
-               && array_key_exists( 'html', $upload );
+    public function check() {
+      $result = array();
+      $valid  = is_array( $this->upload )
+                && array_key_exists( 'headers', $this->upload )
+                && array_key_exists( 'html', $this->upload );
       if ( ! $valid ) {
-        return new WP_Error( 'imap', 'Invalid email upload array' );
+        $error = array(
+          'code'    => self::INVALID_MESSAGE,
+          'message' => __( 'Incomplete or invalid email message', 'post-from-email' ),
+        );
+
+        $this->log_item->errors [] = $error;
+        $this->log_item->valid     = 0;
+
+        return array( $result );
       }
 
       /* check the allowlist */
-      if ( array_key_exists( 'from', $upload['headers'] ) ) {
-        $from = $upload['headers']['from'];
+      if ( array_key_exists( 'from', $this->upload['headers'] ) ) {
+        $from                 = $this->upload['headers']['from'];
+        $this->log_item->from = $from;
       } else {
         $from = null;
       }
@@ -74,77 +110,97 @@ namespace Post_From_Email {
 
       if ( ! $allowed ) {
         /* translators: 1: a sanitized email address */
-        $message = __( 'Sender %1$s not in allowed senders', 'post-from-email' );
-        $message = sprintf( $message, esc_attr( $from ) );
-
-        return new WP_Error( 'allowlist', $message );
+        $message   = __( 'Message ignored because %1$s is not in the list of allowed senders', 'post-from-email' );
+        $message   = sprintf( $message, esc_attr( $from ) );
+        $result [] = array(
+          'code'    => self::FROM_NOT_IN_ALLOWLIST,
+          'message' => $message,
+        );
       }
 
       if ( $this->credentials['dkim'] ) {
-        $dkim_verified = $this->verify_dkim_signature( $upload['headers'] );
-        if ( ! $dkim_verified ) {
-          $message = __( 'Message is not signed. ', 'post-from-email' );
-
-          return new WP_Error( 'dkim', $message );
+        $dkim_checked = $this->check_dkim_signature_exists( $this->upload['headers'] );
+        if ( ! $dkim_checked ) {
+          $message                   = __( 'Message ignored because it was not signed. ', 'post-from-email' );
+          $error                     = array(
+            'code'    => self::MISSING_SIGNATURE,
+            'message' => $message,
+          );
+          $result []                 = $error;
+          $this->log_item->errors [] = $error;
+        } else {
+          $dkim_verified = $this->verify_dkim_signature( $this->upload['headers'] );
+          if ( ! $dkim_verified ) {
+            $message                   = __( 'Message ignored because its signature was invalid. ', 'post-from-email' );
+            $error                     = array(
+              'code'    => self::INVALID_SIGNATURE,
+              'message' => $message,
+            );
+            $result []                 = $error;
+            $this->log_item->errors [] = $error;
+          }
         }
       }
-      if ( false && array_key_exists( 'to', $upload['headers'] ) ) {  //TODO plus addressing?
-        foreach ( $this->get_properties_from_email( imap_utf8( $upload['headers']['to'] ) ) as $category ) {
+
+      return count( $result ) > 0 ? $result : true;
+    }
+
+    /**
+     * Turn an email object into a post.
+     *
+     * @return string|WP_Error
+     */
+    public function process() {
+
+      if ( false && array_key_exists( 'to', $this->upload['headers'] ) ) {  //TODO plus addressing?
+        foreach ( $this->get_properties_from_email( imap_utf8( $this->upload['headers']['to'] ) ) as $category ) {
           $categories [] = $this->maybe_insert_category( $category, $category, $category );
         }
       }
 
-      $categories = get_the_terms( $this->profile, 'category' );
-      $categories = array_map( function ( $item ) {
-        return $item->term_id;
-      }, $categories );
-
-      $categories [] = $this->maybe_insert_category( 'Email', 'Post From Email', 'post-from-email' );
-
-      $tags = get_the_terms( $this->profile, 'post_tag' );
-      $tags = is_array( $tags ) ? $tags : array();
-      $tags = array_map( function ( $item ) {
-        return $item->term_id;
-      }, $tags );
+      $categories = wp_list_pluck( get_the_terms( $this->profile, 'category' ), 'term_id' );
+      $tags       = wp_list_pluck( get_the_terms( $this->profile, 'post_tag' ), 'term_id' );
 
       try {
-        $doc                     = new DOMDocument( '1.0', 'utf-8' );
+        $doc = new DOMDocument( '1.0', 'utf-8' );
+
         $doc->preserveWhiteSpace = false;
 
-        $html = mb_convert_encoding( $upload['html'], 'HTML-ENTITIES', "UTF-8" );
+        $html = mb_convert_encoding( $this->upload['html'], 'HTML-ENTITIES', "UTF-8" );
         @$doc->loadHTML( $html, LIBXML_NOWARNING );
 
         $title = $this->getElementContents( $doc, '/html/head/title', '' );
         if ( 0 === strlen( $title ) ) {
-          $title = imap_utf8( $upload['headers']['subject'] );
+          $title = imap_utf8( $this->upload['headers']['subject'] );
         }
+        $this->log_item->subject = $title;
 
         /* A unique filename-safe (all lower case) tag for an email */
-        $tag = $this->base32_encode( md5( serialize( $upload['headers'] ), true ) );
+        $tag = $this->base32_encode( md5( serialize( $this->upload['headers'] ), true ) );
 
         /* Use the date from the email header if available.  */
 
-        $date                   = $upload['headers']['date'];
+        $date                   = $this->upload['headers']['date'];
         $post_date_local        = new DateTimeImmutable( $date, wp_timezone() );
         $post_date_local_string = $post_date_local->format( "Y-m-d\TH:i:s" );
         $post_date_utc          = $post_date_local->setTimezone( new DateTimeZone( 'UTC' ) );
         $post_date_utc_string   = $post_date_utc->format( "Y-m-d\TH:i:s" );
 
-        $meta_key   = POST_FROM_EMAIL_SLUG . '-source';
-        $content    = array();
-        $content [] = '[';
-        $content [] = POST_FROM_EMAIL_SLUG;
-        $content [] = ' tag="';
-        $content [] = $tag;
-        $content [] = '" ';
-        $content [] = ' meta_tag="';
-        $content [] = $meta_key;
-        $content [] = '" ';
-        $content [] = ']';
-        $post       = array(
+        $source_meta = POST_FROM_EMAIL_SLUG . '-source';
+        $content     = array();
+        $content []  = '[';
+        $content []  = POST_FROM_EMAIL_SLUG;
+        $content []  = ' tag="';
+        $content []  = $tag;
+        $content []  = '" ';
+        $content []  = ' meta_tag="';
+        $content []  = $source_meta;
+        $content []  = '" ';
+        $content []  = ']';
+        $post        = array(
           'post_author'    => $this->profile->post_author,
           /* TODO make this a number of whole words */
-          'post_excerpt'   => substr( $upload['plain'], 0, 160 ),
+          'post_excerpt'   => substr( $this->upload['plain'], 0, 160 ),
           'post_date'      => $post_date_local_string,
           'post_date_gmt'  => $post_date_utc_string,
           'post_content'   => implode( '', $content ),
@@ -155,14 +211,30 @@ namespace Post_From_Email {
           'ping_status'    => $this->profile->comment_status,
           'tags_input'     => $tags,
         );
-        $id         = wp_insert_post( $post, true, true );
+        $id          = wp_insert_post( $post, true, true );
         if ( is_wp_error( $id ) ) {
+          $this->log_item->errors [] = array(
+            'code'    => self::POST_CREATION_FAILURE,
+            'message' => $id->get_error_message(),
+          );
+          $this->log_item->valid     = 0;
+
           return $id;
         }
-        update_post_meta( $id, $meta_key, $doc->saveHTML(), 'post' );
-        $this->update_links ($id, $this->profile->ID);
+        update_post_meta( $id, $source_meta, $doc->saveHTML(), 'post' );
+        $this->update_links( $id, $this->profile->ID );
+        $this->log_item->post_id = $id;
+        $this->log_item->valid   = 1;
       } catch ( Exception $ex ) {
+        $this->log_item->errors [] = array(
+          'code'    => self::POST_CREATION_EXCEPTION,
+          'message' => $ex->getMessage(),
+        );
+        $this->log_item->valid     = 0;
+
         return new WP_Error( 'imap', $ex->getMessage() );
+      } finally {
+        $this->log_item->store();
       }
 
       return 'OK';
@@ -277,7 +349,8 @@ namespace Post_From_Email {
      * @return bool True if the message should be allowed
      */
     private function sender_in_allowlist( string $sender ): bool {
-      $allowed = false;
+      $allowed                 = false;
+      $this->log_item->allowed = 0;
       if ( is_array( $this->credentials )
            && array_key_exists( 'allowlist', $this->credentials )
            && is_string( $this->credentials['allowlist'] )
@@ -288,29 +361,57 @@ namespace Post_From_Email {
           foreach ( $allows as $allow ) {
             if ( strlen( $allow ) > 0 ) {
               if ( str_contains( strtolower( $sender ), strtolower( $allow ) ) ) {
+                $this->log_item->allowed = 1;
+
                 return true;
               }
             }
           }
         }
       } else {
-        $allowed = true;
+        $this->log_item->allowed = - 1;
+        $allowed                 = true;
       }
 
       return $allowed;
     }
 
     /**
-     * Verify the DKIM signature if required by the credentials.
+     * Check for the existence of the DKIM signature.
      *
      * @param array $headers Email headers.
      *
-     * @return bool Falso if we should reject the message.
+     * @return bool False if we should ignore the message.
+     */
+    private function check_dkim_signature_exists( $headers ) {
+      if ( array_key_exists( 'dkim', $this->credentials ) && $this->credentials['dkim'] ) {
+        $result                 = Pop_Email::check_dkim_signature_exists( $headers );
+        $this->log_item->signed = $result ? 1 : 0;
+
+        return $result;
+      } else {
+        $this->log_item->signed = - 1;
+
+        return true;
+      }
+    }
+
+    /**
+     * Verify the DKIM signature.
+     *
+     * @param array $headers Email headers.
+     *
+     * @return bool Falso if we should ignore the message.
      */
     private function verify_dkim_signature( $headers ) {
       if ( array_key_exists( 'dkim', $this->credentials ) && $this->credentials['dkim'] ) {
-        return Pop_Email::verify_dkim_signature( $headers );
+        $result                 = Pop_Email::verify_dkim_signature( $headers );
+        $this->log_item->signed = $result ? 1 : 0;
+
+        return $result;
       } else {
+        $this->log_item->signed = - 1;
+
         return true;
       }
     }
@@ -323,16 +424,16 @@ namespace Post_From_Email {
      *
      * @return void
      */
-    private function update_links ( $post_id, $profile_id) {
+    private function update_links( $post_id, $profile_id ) {
 
       $my_profile_key = POST_FROM_EMAIL_SLUG . '-profile';
-      update_post_meta($post_id, $my_profile_key, $profile_id);
+      update_post_meta( $post_id, $my_profile_key, $profile_id );
 
       $my_posts_key = POST_FROM_EMAIL_SLUG . '-posts';
-      $myposts = get_post_meta ($profile_id, $my_posts_key, true);
-      $myposts = is_array ($myposts) ? $myposts : array();
-      $myposts [] = $post_id;
-      update_post_meta($profile_id, $my_posts_key, $myposts);
+      $myposts      = get_post_meta( $profile_id, $my_posts_key, true );
+      $myposts      = is_array( $myposts ) ? $myposts : array();
+      $myposts []   = $post_id;
+      update_post_meta( $profile_id, $my_posts_key, $myposts );
     }
   }
 }

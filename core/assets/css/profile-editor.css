@@ -3,15 +3,34 @@ Backend related CSS
 -----------------*/
 
 /* make it look like Gmail's POP credentials box */
-div#credentials, div#filter, div#webhook {
+div#credentials, div#filter, div#webhook, div#postlog {
     background-color: #fff7d7;
     border-color: #fad163;
 }
 div#credentials > div.postbox-header,
 div#filter > div.postbox-header,
-div#webhook > div.postbox-header {
+div#webhook > div.postbox-header,
+div#postlog > div.postbox-header
+{
     background-color: #fad163;
     border-color: #fad163;
+}
+
+div.ui-dialog.helpbox.ui-widget.ui-widget-content {
+    border-radius: 1.0em;
+    border-width: 2px;
+    border-color: #fad163;
+}
+div.ui-dialog.helpbox.ui-widget.ui-widget-content > div.ui-dialog-titlebar {
+    border-top-left-radius: 1.0em;
+    border-top-right-radius: 1.0em;
+    border-width: 2px;
+    margin-top: -5px;
+    margin-right: -5px;
+    margin-left: -5px;
+}
+div.ui-dialog.helpbox.ui-widget.ui-widget-content > div.ui-dialog-titlebar > button.ui-button {
+    margin-right: 0.5em;
 }
 
 table.credentials {
@@ -72,4 +91,14 @@ div.helpbox.ui-dialog.ui-widget > div.ui-dialog-titlebar {
 div.helpbox.ui-dialog.ui-widget > div.ui-dialog-content {
     background-color: #fffdf5;
     border-color: #fad163;
+}
+
+div#postlog table.postlog > tbody > tr.good {
+    background-color: #e8ffe8;
+}
+div#postlog table.postlog > tbody > tr.bad {
+    background-color: #ffe8e8;
+}
+div#postlog table.postlog > tbody > tr.nothing {
+    background-color: inherit;
 }

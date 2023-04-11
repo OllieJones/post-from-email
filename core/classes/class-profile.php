@@ -136,6 +136,16 @@ namespace Post_From_Email {
     array()
    );
 
+   add_meta_box(
+    'postlog',
+    __( 'Activity', 'post-from-email' ),
+    array( $this, 'postlog_meta_box' ),
+    null,
+    'advanced', /* advanced|normal|side */
+    'default',
+    array()
+   );
+
    remove_meta_box( 'generate_layout_options_meta_box', null, 'side' );
   }
 
@@ -359,6 +369,105 @@ namespace Post_From_Email {
   }
 
   /**
+   * HTML for the fourth metabox, activity log.
+   *
+   * @param WP_Post $post current post.
+   * @param array   $callback_args Args given to make_meta_box()
+   *
+   * @return void
+   */
+  public function postlog_meta_box( $post, $callback_args ) {
+   require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-log-post.php';
+
+   wp_enqueue_style( 'profile-editor',
+    POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/profile-editor.css',
+    [],
+    POST_FROM_EMAIL_VERSION );
+
+   $date_format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+   $this->postlog_help_box();
+
+   ?>
+   <table class="postlog">
+    <tbody>
+
+    <?php
+    foreach ( Log_Post::get( $post->ID ) as $item ) {
+     /** @var Log_Post $item */
+     $datestamp = get_date_from_gmt( date( 'Y-m-d H:i:s', $item->time ), $date_format );
+
+     $message = is_array( $item->errors ) && count( $item->errors ) >= 1 ? $item->errors[0]['message'] : '';
+     switch ( $item->valid ) {
+      case 1:
+       $class   = 'good';
+       $subject = $item->subject;
+       $from    = $item->from;
+       $icon    =
+        $item->signed == 1 ? '<span class="dashicons dashicons-privacy"></span>' : '<span class="dashicons dashicons-yes-alt"></span>';
+       break;
+      case 0:
+       $class   = 'bad';
+       $subject = null;
+       $from    = $message;
+       $icon    = '<span class="dashicons dashicons-warning"></span>';
+       break;
+      case - 1:
+       $class   = 'nothing';
+       $subject = null;
+       $from    = $message;
+       $icon    = '<span class="dashicons dashicons-marker"></span>';
+       break;
+      default:
+       $class   = '';
+       $subject = null;
+       $from    = '';
+       $icon    = '<span class="dashicons dashicons-flag"></span>';
+       break;
+     }
+
+     ?>
+     <tr class="<?php echo esc_attr( $class ) ?>">
+      <td>
+       <?php echo wp_kses( $icon, 'post' ) ?>
+      </td>
+      <td>
+       <?php echo esc_html( $datestamp ); ?>
+      </td>
+      <td>
+       <?php echo esc_html( $item->source ); ?>
+      </td>
+      <?php
+      if ( $subject ) {
+       ?>
+       <td> <?php echo esc_html( $from ); ?> </td>
+       <td>
+        <?php
+        if ( $item->post_id > 0 ) {
+         $link = get_permalink( $item->post_id );
+         if ( is_string( $link ) && strlen( $link ) > 0 ) {
+          echo '<a href="' . esc_attr( $link ) . '" style="text-decoration: none;"><span class="dashicons dashicons-admin-post"></span></a>';
+         }
+        }
+        ?>
+       </td>
+       <td> <?php echo esc_html( $subject ); ?> </td>
+       <?php
+      } else {
+       ?>
+       <td colspan="3"> <?php echo esc_html( $from ); ?> </td>
+       <?php
+      }
+      ?>
+
+     </tr>
+     <?php
+    } ?>
+    </tbody>
+   </table>
+   <?php
+  }
+
+  /**
    * HTML for the second metabox, allowlist and DKIM.
    *
    * @param WP_Post $post current post.
@@ -487,6 +596,27 @@ namespace Post_From_Email {
    return $settings;
   }
 
+  /**
+   * Retrieve complete url/
+   *
+   * @param array $parsed_url
+   *
+   * @return string
+   */
+  function get_url( $parsed_url ) {
+   $scheme   = isset( $parsed_url['scheme'] ) ? $parsed_url['scheme'] . '://' : '';
+   $host     = $parsed_url['host'] ?? '';
+   $port     = isset( $parsed_url['port'] ) ? ':' . $parsed_url['port'] : '';
+   $user     = $parsed_url['user'] ?? '';
+   $pass     = isset( $parsed_url['pass'] ) ? ':' . $parsed_url['pass'] : '';
+   $pass     = ( $user || $pass ) ? "$pass@" : '';
+   $path     = $parsed_url['path'] ?? '';
+   $query    = isset( $parsed_url['query'] ) ? '?' . $parsed_url['query'] : '';
+   $fragment = isset( $parsed_url['fragment'] ) ? '#' . $parsed_url['fragment'] : '';
+
+   return "$scheme$user$pass$host$port$path$query$fragment";
+  }
+
   private function credentials_help_box() {
    ?>
    <div data-target="credentials" class="dialog popup help-popup hidden"
@@ -541,32 +671,39 @@ namespace Post_From_Email {
    ?>
    <div data-target="webhook" class="dialog popup help-popup hidden"
         title="<?php esc_html_e( 'Webhook settings', 'post-from-email' ) ?>">
-    <p><?php esc_html_e( 'Allow posting via an incoming webhook.' ) ?></p>
+    <p autofocus><?php esc_html_e( 'Allow posting via an incoming webhook.' ) ?></p>
     <hr/>
 
     <p>
      <?php esc_html_e( 'You can use an email-to-webhook service to deliver messages to your server.', 'post-from-email' ) ?>
      <a href="https://CloudMailin.com/" target="_blank">CloudMailin.com</a>
      <?php esc_html_e( 'provides this service.' ) ?>
-     <?php esc_html_e( 'This is a good choice if your email provider blocks incoming messages or is unreliable in some other way.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'This is a good choice if your email provider blocks incoming messages from email marketing services like Constant Contact or Mailchimp.', 'post-from-email' ) ?>
 
     </p>
     <p>
-     <?php esc_html_e( 'Configure your service to POST incoming emails to this API', 'post-from-email' ) ?>:
+     <?php esc_html_e( 'Configure your email-to-webhook service to POST incoming emails to this site using the webhook URL', 'post-from-email' ) ?>:
+    </p>
+    <p style="margin-left: 1em;">
      <code><?php
-      echo get_rest_url( null, POST_FROM_EMAIL_SLUG . '/v1/upload' ) ;
-      ?></code>.
+      $user   = wp_get_current_user();
+      $url            = get_rest_url( null, POST_FROM_EMAIL_SLUG . '/v1/upload' );
+      $parsed         = parse_url( $url );
+      $parsed['pass'] = esc_attr__( 'PASSWORD', 'post-from-email' );
+      $parsed['user'] = $user->user_login;
+      echo $this->get_url( $parsed );
+
+      ?></code>
     </p>
     <p>
-     <?php esc_html_e( 'Configure your service to use basic authentication.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Give your username and password in the URL as shown.', 'post-from-email' ) ?>
      <?php
      /* translators: 1 WordPress login name */
      $prompt = __( 'Use your username (%s) and', 'post-from-email' );
-     $user   = wp_get_current_user();
      echo esc_html( sprintf( $prompt, $user->user_login ) );
      ?>
      <a href="<?php echo admin_url( 'profile.php#application-passwords-section' ) ?>"
-        target="_blank"><?php esc_html_e( 'an application password.' ) ?></a>.
+        target="_blank"><?php esc_html_e( 'an application password.' ) ?></a>
      <?php esc_html_e( 'Remove the spaces from your application password before using it.', 'post-from-email' ) ?>
     </p>
    </div>
@@ -628,6 +765,28 @@ namespace Post_From_Email {
 
     <p>
      <?php esc_html_e( 'The author you choose here is assigned to each created post.', 'post-from-email' ) ?>
+    </p>
+   </div>
+   <?php
+  }
+
+  private function postlog_help_box() {
+   ?>
+   <div data-target="postlog" class="dialog popup help-popup hidden"
+        title="<?php esc_html_e( 'Post from Email activity', 'post-from-email' ) ?>">
+    <p><?php esc_html_e( 'View recent activity.' ) ?></p>
+    <hr/>
+
+    <p>
+     <?php esc_html_e( 'This shows posts recently created from email messages. It also shows ignored email messages and the reason for ignoring them.', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <span
+      class="dashicons dashicons-privacy"></span> <?php esc_html_e( ' means a message was signed by the sender.', 'post-from-email' ) ?>
+    </p>
+    <p>
+     <span
+      class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( ' means a message was not signed but still accepted.', 'post-from-email' ) ?>
     </p>
    </div>
    <?php

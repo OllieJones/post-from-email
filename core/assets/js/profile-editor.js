@@ -15,14 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const helpbox  = this
                 jQuery(`div#wpbody div.postbox-container div#${this.dataset.target} > div.postbox-header > h2`)
                     .each(function (_) {
+                        const width = this.parentElement.offsetWidth
                         this.classList.add('has-help-icon')
                         const link = document.createElement('div')
                         link.style.float = 'left'
                         link.classList.add('dashicons', 'dashicons-editor-help', 'help-icon')
                         const dialog_box = jQuery(helpbox).dialog({
-                            position: { my:'left top', collision:'flipfit', at:'right top', of: this.parentElement},
+                            position: { my:'left bottom', collision:'flipfit flipfit', at:'left-5 top', of: this.parentElement},
                             classes: {'ui-dialog': 'helpbox'},
-                            autoOpen: false
+                            autoOpen: false,
+                            width: width+1,
                         })
                         helpbox.classList.remove('hidden')
                         link.addEventListener('click', function(_) {

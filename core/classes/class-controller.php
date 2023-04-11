@@ -3,6 +3,7 @@
 namespace Post_From_Email {
 
   use WP_Error;
+  use WP_Post;
   use WP_Query;
   use WP_REST_Controller;
   use WP_REST_Request;
@@ -42,26 +43,34 @@ namespace Post_From_Email {
       require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
       $upload = $req->get_json_params();
 
-      $saved_response = null;
-      foreach ( $this->get_active_mailboxes() as $profile => $credentials){
-        $make     = new Make_Post( $profile, $credentials);
-        $response = $make->process( $upload);
-        if (! is_wp_error( $response )) {
+      foreach ( $this->get_active_mailboxes() as $profile => $credentials ) {
+        /** @var WP_POST $profile */
+        $post     = new Make_Post( $upload, $profile, $credentials );
+        $post->log_item->source = 'webhook';
+        $validity = $post->check();
+        $response = true;
+        if ( true === $validity ) {
+          $response = $post->process();
+          if ( is_wp_error( $response ) ) {
+            $validity = array( Make_Post::POST_CREATION_FAILURE => $response->get_error_message() );
+          }
+        } else {
+          $post->log_item->valid=0;
+          $post->log_item->store();
+        }
+        if ( true === $validity ) {
           return $response;
         }
-        $saved_response = $response;
       }
 
       $err = new WP_Error();
-      if ($saved_response) {
-        $err->add(400, $saved_response->get_error_message(), array('status'=> 400));
+      if ( WP_DEBUG ) {
+        /* Careful: error messages here can leak back to unauthorized senders */
+        $err->add( 400, 'no webhook-enabled profiles', array( 'status' => 400 ) );
       } else {
-        if (WP_DEBUG) {
-          $err->add( 400, 'no webhook-enabled profiles', array( 'status' => 400 ) );
-        }else {
-          $err->add( 401, '', array( 'status' => 401 ) );
-        }
+        $err->add( 401, '', array( 'status' => 401 ) );
       }
+
       return $err;
     }
 
@@ -81,12 +90,13 @@ namespace Post_From_Email {
       $creds  = Pop_Email::sanitize_credentials( $creds );
       $result = $popper->login( $creds );
       /* Don't localize 'OK' -- Javascript depends on it. */
-      $result = true === $result ? 'OK ' . esc_html__( 'Succeeded. Publish or Update to connect.', 'post-from-email' ) : $result;
+      $result =
+        true === $result ? 'OK ' . esc_html__( 'Succeeded. Publish or Update to connect.', 'post-from-email' ) : $result;
 
       return new WP_REST_Response( $result );
     }
 
-    public function user_can_create (WP_REST_Request $req) {
+    public function user_can_create( WP_REST_Request $req ) {
       return current_user_can( 'create_posts' ) || current_user_can( 'publish_posts' );
     }
 
@@ -133,7 +143,7 @@ namespace Post_From_Email {
 
             $profile     = get_post();
             $credentials = get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
-            if ( is_array( $credentials ) && 'allow' === $credentials['webhook'] )  {
+            if ( is_array( $credentials ) && 'allow' === $credentials['webhook'] ) {
               yield $profile => $credentials;
             }
           }
@@ -142,8 +152,6 @@ namespace Post_From_Email {
         wp_reset_postdata();
       }
     }
-
-
 
   }
 }

@@ -3,6 +3,7 @@
 namespace Post_From_Email {
 
   use Generator;
+  use WP_Post;
   use WP_Query;
 
 // Exit if accessed directly.
@@ -51,36 +52,48 @@ namespace Post_From_Email {
     public static function check_mailboxes( $batchsize = 10, $profile_id = null ) {
 
       foreach ( self::get_active_mailboxes() as $profile => $credentials ) {
-        if ( null !== $profile_id && $profile_id !== $profile->ID) {
+        /** @var WP_POST $profile */
+        if ( null !== $profile_id && $profile_id !== $profile->ID ) {
           /* If we're just doing one profile, skip the others. */
           continue;
         }
+        require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-log-post.php';
+        $log    = new Log_Post( $profile->ID );
         $popper = new Pop_Email();
 
-        if ( ! $credentials || ! isset ( $credentials['user']) ) {
-          /** @noinspection PhpUndefinedFieldInspection */
-          error_log( $profile->ID . ': No username.' );
+        if ( $credentials && is_string( $credentials['host'] ) ) {
+          $log->source = $credentials['host'];
+        }
+        if ( ! $credentials || ! isset ( $credentials['user'] ) ) {
+          $log->valid  = 0;
+          $log->errors [] = array( 'code' => 0, 'message' => __( 'No username' ), 'post-from-email' );
+          $log->store();
           continue;
         }
         $login = $popper->login( $credentials );
         if ( true !== $login ) {
-          /** @noinspection PhpUndefinedFieldInspection */
-          error_log( $profile->ID . ': ' . $credentials['user'] . ': ' . 'Pop_Email login failure: ' . $login );
+          $log->valid  = 0;
+          $log->errors [] = array( 'code' => 0, 'message' => __( 'Email server login failure:' ), 'post-from-email' );
+          $log->store();
           continue;
         }
         try {
-          $count = $batchsize;
+          $processed = 0;
+          $count     = $batchsize;
           foreach ( $popper->fetch_all() as $email ) {
-
+            $processed ++;
             require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
-            $post   = new Make_Post( $profile, $credentials );
+            $post = new Make_Post( $email, $profile, $credentials );
             try {
-              $result = $post->process( $email );
-              if ( is_wp_error( $result ) ) {
-                /** @noinspection PhpUndefinedFieldInspection */
-                error_log( $profile->ID . ': ' . $credentials['user'] . ': ' . 'Pop_Email retrieval failure: ' . $result->get_error_message() );
+              $validity = $post->check();
+              if ( true === $validity ) {
+                $result = $post->process();
+                if ( ! is_wp_error( $result ) ) {
+                  $popper->dele( $email['msgno'] );
+                }
               } else {
-                $popper->dele( $email['msgno'] );
+                $post->log_item->valid = 0;
+                $post->log_item->store();
               }
               /* Stop when batch size reached. */
               if ( 0 === $count -- ) {
@@ -90,37 +103,16 @@ namespace Post_From_Email {
               unset ( $post );
             }
           }
+          if ( 0 === $processed ) {
+            $log->valid  = -1;
+            $error =  array( 'code' => 0, 'message' => __( 'No new messages found when checking mailbox.', 'post-from-email' ) );
+            $log->errors [] = $error;
+            $log->store();
+          }
         } finally {
           $popper->close();
           unset ( $popper );
         }
-      }
-    }
-
-    /**
-     * Encapsulate the WP_Query to get mailbox profiles.
-     * @return \Generator
-     */
-    private static function get_active_mailboxes() {
-      $args     = array(
-        'post_type' => POST_FROM_EMAIL_PROFILE,
-        'status'    => array( 'publish', 'private' ),
-      );
-      $profiles = new WP_Query( $args );
-      try {
-        if ( $profiles->have_posts() ) {
-          while ( $profiles->have_posts() ) {
-            $profiles->the_post();
-
-            $profile     = get_post();
-            $credentials = get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
-            if ( is_array( $credentials ) && is_string( $credentials['host'] ) && strlen( $credentials['host'] ) > 0 ) {
-              yield $profile => $credentials;
-            }
-          }
-        }
-      } finally {
-        wp_reset_postdata();
       }
     }
 
@@ -173,18 +165,18 @@ namespace Post_From_Email {
      */
     public static function sanitize_credentials( $credentials ) {
 
-      if ( ! array_key_exists('disposition', $credentials) || ! is_string($credentials['disposition'])) {
+      if ( ! array_key_exists( 'disposition', $credentials ) || ! is_string( $credentials['disposition'] ) ) {
         $credentials['disposition'] = 'delete';
       } else {
         /* This setting should be 'keep' or 'delete' */
-        $credentials['disposition'] = 'delete' === $credentials['disposition'] ? 'delete'  : 'keep';
+        $credentials['disposition'] = 'delete' === $credentials['disposition'] ? 'delete' : 'keep';
       }
 
-      if ( ! array_key_exists('webhook', $credentials) || ! is_string($credentials['webhook'])) {
+      if ( ! array_key_exists( 'webhook', $credentials ) || ! is_string( $credentials['webhook'] ) ) {
         $credentials['webhook'] = 'deny';
       } else {
         /* This setting should be 'allow' or 'deny' */
-        $credentials['webhook'] = 'allow' === $credentials['webhook'] ? 'allow'  : 'deny';
+        $credentials['webhook'] = 'allow' === $credentials['webhook'] ? 'allow' : 'deny';
       }
 
       $credentials['host'] = self::sanitize_hostname( $credentials['host'] );
@@ -265,6 +257,18 @@ namespace Post_From_Email {
     }
 
     /**
+     * Check for the existence of the DKIM signature
+     *
+     * @param array $headers The email message headers.
+     *
+     * @return bool
+     *
+     */
+    public static function check_dkim_signature_exists( $headers ) {
+      return array_key_exists( 'dkim_signature', $headers );
+    }
+
+    /**
      * Verify the DKIM signature
      *
      * @param array $headers The email message headers.
@@ -272,13 +276,35 @@ namespace Post_From_Email {
      * @return bool
      * @todo Do this right. https://github.com/pimlie/php-dkim/blob/master/DKIM/Verify.php
      * @todo Do this as part of message fetch, not later.
-     *
      */
     public static function verify_dkim_signature( $headers ) {
-      if ( array_key_exists( 'dkim-signature', $headers ) ) {
-        return true;
-      } else {
-        return false;
+      return true;
+    }
+
+    /**
+     * Encapsulate the WP_Query to get mailbox profiles.
+     * @return \Generator
+     */
+    private static function get_active_mailboxes() {
+      $args     = array(
+        'post_type' => POST_FROM_EMAIL_PROFILE,
+        'status'    => array( 'publish', 'private' ),
+      );
+      $profiles = new WP_Query( $args );
+      try {
+        if ( $profiles->have_posts() ) {
+          while ( $profiles->have_posts() ) {
+            $profiles->the_post();
+
+            $profile     = get_post();
+            $credentials = get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
+            if ( is_array( $credentials ) && is_string( $credentials['host'] ) && strlen( $credentials['host'] ) > 0 ) {
+              yield $profile => $credentials;
+            }
+          }
+        }
+      } finally {
+        wp_reset_postdata();
       }
     }
 
@@ -580,7 +606,7 @@ namespace Post_From_Email {
         /* translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.' */
         'Authentication failed'  => esc_attr__( 'Are your Username and Password both correct?', 'post-from-email' ),
         /* translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response' */
-        'POP3 connection broken'      => esc_attr__( 'Your POP Server may be temporarily overloaded. Try again later.', 'post-from-email' ),
+        'POP3 connection broken' => esc_attr__( 'Your POP Server may be temporarily overloaded. Try again later.', 'post-from-email' ),
       );
       foreach ( $errors as $error ) {
         $found = false;
