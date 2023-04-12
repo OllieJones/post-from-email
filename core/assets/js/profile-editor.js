@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const helpbox  = this
                 jQuery(`div#wpbody div.postbox-container div#${this.dataset.target} > div.postbox-header > h2`)
                     .each(function (_) {
-                        const width = this.parentElement.offsetWidth
+                        const width = Math.min (this.parentElement.offsetWidth, 800);
                         this.classList.add('has-help-icon')
                         const link = document.createElement('div')
                         link.style.float = 'left'

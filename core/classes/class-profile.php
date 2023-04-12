@@ -18,6 +18,7 @@ namespace Post_From_Email {
    $this->popper = new Pop_Email();
    add_action( 'init', [ $this, 'register_post_type' ] );
    add_action( 'edit_post' . '_' . POST_FROM_EMAIL_PROFILE, [ $this, 'save_profile_credentials' ], 10, 3 );
+   add_action( 'admin_menu', [ $this, 'remove_taxonomy_menus' ] );
    add_action( 'admin_init', function () {
     add_action( 'edit_form_after_title', [ $this, 'explanatory_header' ] );
     add_filter( 'wp_editor_settings', [ $this, 'editor_settings' ], 10, 2 );
@@ -37,10 +38,11 @@ namespace Post_From_Email {
    register_post_type(
     POST_FROM_EMAIL_PROFILE,
     array(
-     'name'                 => __( 'Template for retrieving posts from eamil', 'post-from-email' ),
+     'name'                 => __( 'Template for retrieving posts from email', 'post-from-email' ),
      'description'          => __( 'Templates for retrieving posts from email', 'post-from-email' ),
      'labels'               => array(
-      'name'                     => _x( 'Posts from email', 'post type general name', 'post-from-email' ),
+      'menu_name'                => _x( 'Posts from email', 'post type menu name', 'post-from-email' ),
+      'name'                     => _x( 'Templates for retrieving posts from email', 'post type general name', 'post-from-email' ),
       'singular_name'            => _x( 'Template for retrieving posts from email', 'post type singular name', 'post-from-email' ),
       'add_new'                  => _x( 'Add New', 'post from email', 'post-from-email' ),
       'add_new_item'             => __( 'Add new template for posts from email', 'post-from-email' ),
@@ -48,7 +50,7 @@ namespace Post_From_Email {
       'edit_item'                => __( 'Edit template for posts from email', 'post-from-email' ),
       'view_item'                => __( 'View template for posts from email', 'post-from-email' ),
       'all_items'                => __( 'All templates', 'post-from-email' ),
-      'search_items'             => __( 'Search templates for posts from email', 'post-from-email' ),
+      'search_items'             => __( 'Search templates', 'post-from-email' ),
       'parent_item_colon'        => __( ':', 'post-from-email' ),
       'not_found'                => __( 'No templates found. Create one.', 'post-from-email' ),
       'not_found_in_trash'       => __( 'No templaces found in Trash.', 'post-from-email' ),
@@ -58,7 +60,7 @@ namespace Post_From_Email {
       'filter_items_list'        => __( 'Filter template list', 'post-from-email' ),
       'items_list_navigation'    => __( 'Template list navigation', 'post-from-email' ),
       'items_list'               => __( 'Template list', 'post-from-email' ),
-      'item_published'           => __( 'Templace activated', 'post-from-email' ),
+      'item_published'           => __( 'Template activated', 'post-from-email' ),
       'item_published_privately' => __( 'Private template activated', 'post-from-email' ),
       'item_reverted_to_draft'   => __( 'Template deactivated', 'post-from-email' ),
       'item_scheduled'           => __( 'Template scheduled for activation', 'post-from-email' ),
@@ -180,22 +182,48 @@ namespace Post_From_Email {
    $credentials = $this->getCredentials( $post );
 
    if ( 'pop' === $credentials ['type'] ) {
-    $possible_ports = Pop_Email::get_possible_ports( $credentials );
-    $options        = array();
-    $options []     = '
-     <option value="">' . esc_html__( '--Choose--', 'post-from-email' ) . '</option>';
-    foreach ( $possible_ports as $possible_port ) {
-     $selected   = $credentials['port'] === $possible_port ? 'selected' : '';
-     $options [] = "
-     <option value='$possible_port' $selected='true'>" . esc_html( $possible_port ) . '</option>';
+
+    /* Timing choice dropdown */
+    $timings_options    = array();
+    $timings_options [] = '<option value="">' . esc_attr__( '--Choose--', 'post-from-email' ) . '</option>';
+    $selected           = $credentials['timing'] === 'never' ? 'selected' : '';
+    $timings_options [] =
+     '<option value="never"' . $selected . ' >' . esc_attr__( 'Never (Disabled)', 'post-from-email' ) . '</option>';
+    $schedules          = wp_get_schedules();
+    uasort( $schedules, function ( $a, $b ) {
+     return intval( $a['interval'] ) - intval( $b['interval'] );
+    } );
+    foreach ( $schedules as $key => $schedule ) {
+     $selected           = $credentials['timing'] === $key ? 'selected' : '';
+     $timings_options [] =
+      '<option value="' . esc_attr( $key ) . '"  ' . $selected . ' >' . esc_html( $schedule['display'] ) . '</option>';
     }
-    $options = implode( PHP_EOL, $options );
+
+    /* Port choice dropdown */
+    $possible_ports  = Pop_Email::get_possible_ports( $credentials );
+    $port_options    = array();
+    $port_options [] = '<option value="">' . esc_attr__( '--Choose--', 'post-from-email' ) . '</option>';
+    foreach ( $possible_ports as $possible_port ) {
+     $possible_port   = intval( $possible_port );
+     $selected        = intval( $credentials['port'] ) === $possible_port ? 'selected' : '';
+     $port_options [] = "
+     <option value='$possible_port' $selected>" . $possible_port . '</option>';
+    }
+    $port_options = implode( PHP_EOL, $port_options );
     ?>
     <input type="hidden" name="credentials[type]" value="<?php echo esc_attr( $credentials['type'] ) ?>"/>
     <input type="hidden" name="credentials[folder]" value="<?php echo esc_attr( $credentials['folder'] ) ?>"/>
     <input type="hidden" name="credentials[posted]" value="<?php echo esc_attr( time() ) ?>"/>
     <?php wp_nonce_field( 'wp_rest', 'credentialnonce', false ) ?>
     <table class="credentials">
+     <tr>
+      <td>
+       <label for="timing"><?php esc_html_e( 'Check email', 'post-from-email' ) ?>:</label>
+      </td>
+      <td colspan="2" class="cred">
+       <select id="timing" name="credentials[timing]"> <?php echo implode( PHP_EOL, $timings_options ) ?></select>
+      </td>
+     </tr>
      <tr>
       <td>
        <label for="address"><?php esc_html_e( 'Email address', 'post-from-email' ) ?>:</label>
@@ -239,7 +267,7 @@ namespace Post_From_Email {
       </td>
       <td>
        <label for="port"><?php esc_html_e( 'Port', 'post-from-email' ) ?></label>
-       <select id="port" name="credentials[port]"> <?php echo $options ?></select>
+       <select id="port" name="credentials[port]"> <?php echo $port_options ?></select>
       </td>
      </tr>
 
@@ -286,7 +314,9 @@ namespace Post_From_Email {
       </td>
       <td colspan="2">
        <?php
-       if ( isset ( $credentials['status'] ) && true === $credentials['status'] ) {
+       if ( 'never' === $credentials['timing'] ) {
+        echo '<div id="status_message" class="success">' . esc_html__( 'Mailbox disabled. Enable it or use a webhook.', 'post-from-email' ) . '</div>';
+       } elseif ( isset ( $credentials['status'] ) && true === $credentials['status'] ) {
         echo '<div id="status_message" class="success">' . esc_html__( 'Connected', 'post-from-email' ) . '</div>';
        } elseif ( isset ( $credentials['status'] ) && is_string( $credentials['status'] ) ) {
         echo '<div id="status_message" class="failure">';
@@ -509,44 +539,53 @@ namespace Post_From_Email {
    * The dynamic portion of the hook name, `$post->post_type`, refers to
    * the post type slug.
    *
-   * @param int     $post_ID Post ID.
-   * @param WP_Post $post Post object.
+   * @param int     $profile_id Post ID.
+   * @param WP_Post $profile Post object.
    *
    * @since 3.7.0
    *
    */
 
-  public function save_profile_credentials( $post_ID, $post ) {
+  public function save_profile_credentials( $profile_id, $profile ) {
 
    if ( isset ( $_POST['action'] ) && 'editpost' !== $_POST['action'] ) {
     return;
    }
-   if ( POST_FROM_EMAIL_PROFILE !== $post->post_type ) {
+   if ( POST_FROM_EMAIL_PROFILE !== $profile->post_type ) {
     return;
    }
-   if ( ! $post_ID ) {
+   if ( ! $profile_id ) {
     return;
    }
    if ( ! isset ( $_POST['credentials'] ) || ! is_array( $_POST['credentials'] ) ) {
     return;
    }
 
-   $credentials = $_POST['credentials'];
+   $credentials     = Pop_Email::sanitize_credentials( $_POST['credentials'] );
+   $old_credentials =
+    Pop_Email::sanitize_credentials( get_post_meta( $profile_id, POST_FROM_EMAIL_SLUG . '_credentials', true ) );
 
-   $credentials           = Pop_Email::sanitize_credentials( $credentials );
-   $result                = $this->popper->login( $credentials );
-   $credentials['status'] = $result;
-   update_post_meta( $post_ID, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
-   if ( true === $result ) {
-    $this->popper->close();
-    if ( 'publish' === $post->post_status || 'private' === $post->post_status ) {
-     Pop_Email::check_mailboxes( 10, $post_ID );
+   if ( $old_credentials['timing'] !== $credentials['timing'] ) {
+    Main::unschedule_mailbox_check( $profile_id );
+   }
+   /* Check email once on post unless timing is set to 'never' */
+   if ( 'never' !== $credentials['timing'] ) {
+    $result                = $this->popper->login( $credentials );
+    $credentials['status'] = $result;
+    update_post_meta( $profile_id, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
+    if ( true === $result ) {
+     $this->popper->close();
+     if ( 'publish' === $profile->post_status || 'private' === $profile->post_status ) {
+      Pop_Email::check_mailboxes( 10, $profile_id );
+     }
     }
+   } else {
+    update_post_meta( $profile_id, POST_FROM_EMAIL_SLUG . '_credentials', $credentials );
    }
   }
 
   /**
-   * Display explanatory information at the top of the profile editing form.
+   * Display explanatory text at the top of the profile editing form.
    *
    * @return void
    */
@@ -597,13 +636,39 @@ namespace Post_From_Email {
   }
 
   /**
+   * The custom post type menu comes with taxonomy-editing items. Remove them.
+   *
+   * Our profile (template) custom post type uses the same categories and tags as ordinary posts,
+   * so we don't need the menus repeated.
+   *
+   * @return void
+   */
+
+  public function remove_taxonomy_menus() {
+   global $submenu;
+   $edit_page = 'edit.php?post_type=' . POST_FROM_EMAIL_PROFILE;
+   $slugs     = [ 'category', 'post_tag' ];
+   if ( is_array( $submenu[ $edit_page ] ) ) {
+    foreach ( $submenu[ $edit_page ] as $k => $sub ) {
+     $params = array();
+     parse_str( wp_parse_url( $sub[2], PHP_URL_QUERY ), $params );
+     if ( array_key_exists( 'taxonomy', $params ) ) {
+      if ( in_array( $params['taxonomy'], $slugs ) ) {
+       unset( $submenu[ $edit_page ][ $k ] );
+      }
+     }
+    }
+   }
+  }
+
+  /**
    * Retrieve complete url/
    *
    * @param array $parsed_url
    *
    * @return string
    */
-  function get_url( $parsed_url ) {
+  private function get_url( $parsed_url ) {
    $scheme   = isset( $parsed_url['scheme'] ) ? $parsed_url['scheme'] . '://' : '';
    $host     = $parsed_url['host'] ?? '';
    $port     = isset( $parsed_url['port'] ) ? ':' . $parsed_url['port'] : '';
@@ -621,15 +686,15 @@ namespace Post_From_Email {
    ?>
    <div data-target="credentials" class="dialog popup help-popup hidden"
         title="<?php esc_html_e( 'Mailbox Settings', 'post-from-email' ) ?>">
-    <p><?php esc_html_e( 'Get this information from your email service provider.' ) ?></p>
+    <p><?php esc_html_e( 'Get these settings from your email service provider.' ) ?></p>
     <hr/>
 
     <p>
      <?php esc_html_e( 'You can post to your site by sending messages to a dedicated email address.', 'post-from-email' ) ?>
      <?php esc_html_e( 'To do this you need a dedicated mailbox on a convenient email server.', 'post-from-email' ) ?>
      <?php esc_html_e( '(Most hosting services let you create mailboxes.)', 'post-from-email' ) ?>
-     <?php esc_html_e( 'When you set up that mailbox, the email provider gives you this information.', 'post-from-email' ) ?>
-     <?php esc_html_e( 'Enter it here.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'When you create that mailbox, the email provider gives you these settings.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'Enter them here.', 'post-from-email' ) ?>
      <?php esc_html_e( 'Then, your site will check email regularly, and create posts from the messages it finds.', 'post-from-email' ) ?>
 
     </p>
@@ -638,9 +703,27 @@ namespace Post_From_Email {
      <?php esc_html_e( '(Constant Contact and Mailchimp are popular marketing services.)', 'post-from-email' ) ?>
     </p>
     <p>
-     <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s  account information here.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'To retrieve posts from your email messages, enter the maibox\'s account settings here.', 'post-from-email' ) ?>
      <?php esc_html_e( 'Your retrieved posts inherit the categories, tags, and author you set for this template.', 'post-from-email' ) ?>
     </p>
+    <p>
+     <?php esc_html_e( 'If you use an email-to-webhook service, you don\'t need to provide mailbox account settings.', 'post-from-email' ) ?>
+     <?php echo esc_htmL__( 'Just set', 'post-from-email' )
+                . ' <em>' . esc_html__( 'Check email', 'post-from-email' ) . '</em> '
+                . esc_html__( 'to', 'post-from-email' )
+                . ' <em>' . esc_html__( 'Never (Disabled)', 'post-from-email' ) . '</em>.' ?>
+    </p>
+    <?php
+    if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+     ?>
+     <p>
+      <?php esc_html_e( 'On your site WP-Cron is disabled:  DISABLE_WP_CRON is set to true in your wp_config.php file.', 'post-from-email' ) ?>
+      <?php esc_html_e( 'Be sure to schedule a System Cron Job to check your email.', 'post-from-email' ) ?>
+
+     </p>
+     <?php
+    }
+    ?>
    </div>
    <?php
   }
@@ -654,7 +737,7 @@ namespace Post_From_Email {
 
     <p>
      <?php esc_html_e( 'To only accept messages from certain senders, enter their email addresses, one per line, in the Allowed Senders box.', 'post-from-email' ) ?>
-     <?php esc_html_e( 'If you receive messages from two different senders in one mailbox, you can create two different templates like this one.', 'post-from-email' ) ?>
+     <?php esc_html_e( 'If you receive messages from two different senders in one mailbox, and you want their posts to have different categories, tags, or authors, you can create two different templates like this one.', 'post-from-email' ) ?>
      <?php esc_html_e( 'Put just one sender\'s address in each template.', 'post-from-email' ) ?>
      <?php esc_html_e( 'If you do this you can apply a diferent template, with different categories and tags, to each sender.', 'post-from-email' ) ?>
     </p>
@@ -682,11 +765,12 @@ namespace Post_From_Email {
 
     </p>
     <p>
-     <?php esc_html_e( 'Configure your email-to-webhook service to POST incoming emails to this site using the webhook URL', 'post-from-email' ) ?>:
+     <?php esc_html_e( 'Configure your email-to-webhook service to POST incoming emails to this site using the webhook URL', 'post-from-email' ) ?>
+     :
     </p>
     <p style="margin-left: 1em;">
      <code><?php
-      $user   = wp_get_current_user();
+      $user           = wp_get_current_user();
       $url            = get_rest_url( null, POST_FROM_EMAIL_SLUG . '/v1/upload' );
       $parsed         = parse_url( $url );
       $parsed['pass'] = esc_attr__( 'PASSWORD', 'post-from-email' );

@@ -7,7 +7,7 @@ Tags: private
 Requires at least: 5.9
 Tested up to: 6.2
 Requires PHP: 7.4
-Stable tag: 0.3.4
+Stable tag: 0.3.5
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,7 +39,10 @@ You can use the [CloudMailin](https://cloudmailin.com/) service to create a spec
 
 == Changelog ==
 
-= 0.3.4: April 1, 2023
+= 0.3.5: April 12, 2023
+Choice of email-check frequency.
+
+= 0.3.4: April 11, 2023
 Log activity and add activity metabox.
 
 = 0.3.3: April 8, 2023

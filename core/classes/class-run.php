@@ -117,11 +117,8 @@ namespace Post_From_Email {
       if ( str_starts_with( $url, 'f-' ) && str_ends_with( $url, '.html' ) ) {
         return $url;
       }
-      $file = 'f-'
-              . sanitize_key( parse_url( $url, PHP_URL_HOST )
-                              . '-'
-                              . parse_url( $url, PHP_URL_PATH ) )
-              . '.html';
+      $parsed = wp_parse_url ( $url );
+      $file = 'f-' . sanitize_key( $parsed['PHP_URL_HOST'] . '-' . $parsed['PHP_URL_PATH'] ) . '.html';
 
       return $file;
     }

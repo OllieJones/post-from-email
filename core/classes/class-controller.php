@@ -88,10 +88,16 @@ namespace Post_From_Email {
 
       $popper = new Pop_Email();
       $creds  = Pop_Email::sanitize_credentials( $creds );
-      $result = $popper->login( $creds );
-      /* Don't localize 'OK' -- Javascript depends on it. */
-      $result =
-        true === $result ? 'OK ' . esc_html__( 'Succeeded. Publish or Update to connect.', 'post-from-email' ) : $result;
+      if ( 'never' !== $creds['timing']) {
+        $result = $popper->login( $creds );
+        /* Don't localize 'OK' -- Javascript depends on it. */
+        $result =
+          true === $result ? 'OK ' . esc_html__( 'Succeeded. Publish or Update to connect.', 'post-from-email' ) : $result;
+      } else {
+        /* Don't localize 'OK' -- Javascript depends on it. */
+        $result = 'OK ' . esc_html__( 'Mailbox disabled. Enable it or use a webhook.', 'post-from-email' );
+
+      }
 
       return new WP_REST_Response( $result );
     }

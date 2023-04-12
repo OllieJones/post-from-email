@@ -65,14 +65,14 @@ namespace Post_From_Email {
           $log->source = $credentials['host'];
         }
         if ( ! $credentials || ! isset ( $credentials['user'] ) ) {
-          $log->valid  = 0;
+          $log->valid     = 0;
           $log->errors [] = array( 'code' => 0, 'message' => __( 'No username' ), 'post-from-email' );
           $log->store();
           continue;
         }
         $login = $popper->login( $credentials );
         if ( true !== $login ) {
-          $log->valid  = 0;
+          $log->valid     = 0;
           $log->errors [] = array( 'code' => 0, 'message' => __( 'Email server login failure:' ), 'post-from-email' );
           $log->store();
           continue;
@@ -104,8 +104,12 @@ namespace Post_From_Email {
             }
           }
           if ( 0 === $processed ) {
-            $log->valid  = -1;
-            $error =  array( 'code' => 0, 'message' => __( 'No new messages found when checking mailbox.', 'post-from-email' ) );
+            $log->valid     = - 1;
+            $error          =
+              array(
+                'code'    => 0,
+                'message' => __( 'No new messages found when checking mailbox.', 'post-from-email' ),
+              );
             $log->errors [] = $error;
             $log->store();
           }
@@ -164,6 +168,16 @@ namespace Post_From_Email {
      * @return array The sanitized array.
      */
     public static function sanitize_credentials( $credentials ) {
+
+      $credentials = is_array ($credentials) ? $credentials : self::$template_credentials;
+      if ( ! array_key_exists( 'timing', $credentials ) || ! is_string( $credentials['timing'] ) ) {
+        $credentials['timing'] = 'never';
+      }
+      $schedules    = array_keys( wp_get_schedules() );
+      $schedules [] = 'never';
+      if ( ! in_array( $credentials['timing'], $schedules ) ) {
+        $credentials['timing'] = 'never';
+      }
 
       if ( ! array_key_exists( 'disposition', $credentials ) || ! is_string( $credentials['disposition'] ) ) {
         $credentials['disposition'] = 'delete';
@@ -285,24 +299,28 @@ namespace Post_From_Email {
      * Encapsulate the WP_Query to get mailbox profiles.
      * @return \Generator
      */
-    private static function get_active_mailboxes() {
+    public static function get_active_mailboxes() {
       $args     = array(
-        'post_type' => POST_FROM_EMAIL_PROFILE,
-        'status'    => array( 'publish', 'private' ),
+        'post_type'           => POST_FROM_EMAIL_PROFILE,
+        'status'              => array( 'publish', 'private' ),
+        'orderby'             => 'none',
+        'nopaging'            => true,
+        'ignore_sticky_posts' => true,
       );
       $profiles = new WP_Query( $args );
       try {
-        if ( $profiles->have_posts() ) {
-          while ( $profiles->have_posts() ) {
-            $profiles->the_post();
-
-            $profile     = get_post();
-            $credentials = get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
-            if ( is_array( $credentials ) && is_string( $credentials['host'] ) && strlen( $credentials['host'] ) > 0 ) {
+        $posts = $profiles->get_posts();
+        foreach ($posts as $profile) {
+            $credentials =
+              self::sanitize_credentials( get_post_meta( $profile->ID, POST_FROM_EMAIL_SLUG . '_credentials', true ) );
+            if ( is_array( $credentials )
+                 && 'never' !== $credentials['timing']
+                 && is_string( $credentials['host'] )
+                 && strlen( $credentials['host'] ) > 0
+            ) {
               yield $profile => $credentials;
             }
           }
-        }
       } finally {
         wp_reset_postdata();
       }
