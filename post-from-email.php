@@ -8,9 +8,9 @@
  *
  * @wordpress-plugin
  * Plugin Name:   Post from Email
- * Plugin URI:    https://github.com/OllieJones/post-from-email
+ * Plugin URI:    https://www.plumislandmedia.net/post-from-email/
  * Description:   Create WordPress posts from email messages.
- * Version:       0.3.6
+ * Version:       0.4.0
  * Author:        Ollie Jones
  * Author URI:    https://github.com/OllieJones
  * Text Domain:   post-from-email
@@ -48,7 +48,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 const POST_FROM_EMAIL_NAME = 'Post from Email';
 
 // Plugin version
-const POST_FROM_EMAIL_VERSION = '0.3.6';
+const POST_FROM_EMAIL_VERSION = '0.4.0';
 
 // Plugin Root File
 const POST_FROM_EMAIL_PLUGIN_FILE = __FILE__;

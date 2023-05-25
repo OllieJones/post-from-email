@@ -44,25 +44,26 @@ namespace Post_From_Email {
     public function post( WP_REST_Request $req ) {
       require_once ABSPATH . 'wp-admin/includes/admin.php';
       require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/class-make-post.php';
-      $upload = $req->get_json_params();
-      $chosen_profile_id = (int) $req->get_param( 'profile_id' );
+      $upload            = $req->get_json_params();
+      $chosen_profile_id = $req->get_param( 'profile_id' );
+      $chosen_profile_id = is_numeric( $chosen_profile_id ) ? (int) $chosen_profile_id : null;
 
       foreach ( $this->get_active_mailboxes( $chosen_profile_id ) as $profile => $credentials ) {
         /** @var WP_POST $profile */
         if ( null !== $chosen_profile_id && $chosen_profile_id !== $profile->ID ) {
           continue;
         }
-        $post     = new Make_Post( $upload, $profile, $credentials );
+        $post                   = new Make_Post( $upload, $profile, $credentials );
         $post->log_item->source = 'webhook';
-        $validity = $post->check();
-        $response = true;
+        $validity               = $post->check();
+        $response               = true;
         if ( true === $validity ) {
           $response = $post->process();
           if ( is_wp_error( $response ) ) {
             $validity = array( Make_Post::POST_CREATION_FAILURE => $response->get_error_message() );
           }
         } else {
-          $post->log_item->valid=0;
+          $post->log_item->valid = 0;
           $post->log_item->store();
         }
         if ( true === $validity ) {
@@ -96,7 +97,7 @@ namespace Post_From_Email {
 
       $popper = new Pop_Email();
       $creds  = sanitize_credentials( $creds );
-      if ( 'never' !== $creds['timing']) {
+      if ( 'never' !== $creds['timing'] ) {
         $result = $popper->login( $creds );
         /* Don't localize 'OK' -- Javascript depends on it. */
         $result =
@@ -104,7 +105,6 @@ namespace Post_From_Email {
       } else {
         /* Don't localize 'OK' -- Javascript depends on it. */
         $result = 'OK ' . esc_html__( 'Mailbox disabled. Enable it or use a webhook.', 'post-from-email' );
-
       }
 
       return new WP_REST_Response( $result );
@@ -209,7 +209,7 @@ namespace Post_From_Email {
                     return false;
                   }
                   $profile_id = (int) $profile_id;
-                  $found = false;
+                  $found      = false;
                   foreach ( $this->get_active_mailboxes( $profile_id ) as $profile => $credentials ) {
                     /** @var WP_POST $profile */
                     if ( $profile->ID === $profile_id ) {

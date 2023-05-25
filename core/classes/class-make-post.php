@@ -169,7 +169,7 @@ class Make_Post {
 
       $title = $this->getElementContents( $doc, '/html/head/title', '' );
       if ( 0 === strlen( $title ) ) {
-        if ( array_key_exists( 'headers', $this->upload ) && array_key_exists( 'subject', $this->upload['subject'] ) ) {
+        if ( array_key_exists( 'headers', $this->upload ) && array_key_exists( 'subject', $this->upload['headers'] ) ) {
           $title = imap_utf8( $this->upload['headers']['subject'] );
         }
       }
