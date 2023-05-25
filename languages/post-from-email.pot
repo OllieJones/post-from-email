@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Post from Email 0.3.5\n"
+"Project-Id-Version: Post from Email 0.3.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-from-email\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-04-12T13:10:38-04:00\n"
+"POT-Creation-Date: 2023-05-25T09:47:49-04:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.6.0\n"
 "X-Domain: post-from-email\n"
@@ -34,13 +34,21 @@ msgstr ""
 msgid "https://github.com/OllieJones"
 msgstr ""
 
-#: core/classes/class-controller.php:95
+#: core/classes/class-controller.php:103
 msgid "Succeeded. Publish or Update to connect."
 msgstr ""
 
-#: core/classes/class-controller.php:98
-#: core/classes/class-profile.php:318
+#: core/classes/class-controller.php:106
+#: core/classes/class-profile.php:330
 msgid "Mailbox disabled. Enable it or use a webhook."
+msgstr ""
+
+#: core/classes/class-controller.php:131
+msgid "Invalid URL:"
+msgstr ""
+
+#: core/classes/class-controller.php:170
+msgid "Post created."
 msgstr ""
 
 #: core/classes/class-main.php:160
@@ -67,20 +75,20 @@ msgstr ""
 msgid "Three Times Daily"
 msgstr ""
 
-#: core/classes/class-make-post.php:93
+#: core/classes/class-make-post.php:87
 msgid "Incomplete or invalid email message"
 msgstr ""
 
 #. translators: 1: a sanitized email address
-#: core/classes/class-make-post.php:113
+#: core/classes/class-make-post.php:107
 msgid "Message ignored because %1$s is not in the list of allowed senders"
 msgstr ""
 
-#: core/classes/class-make-post.php:124
+#: core/classes/class-make-post.php:118
 msgid "Message ignored because it was not signed. "
 msgstr ""
 
-#: core/classes/class-make-post.php:134
+#: core/classes/class-make-post.php:128
 msgid "Message ignored because its signature was invalid. "
 msgstr ""
 
@@ -270,315 +278,344 @@ msgstr ""
 msgid "Templace updated"
 msgstr ""
 
-#: core/classes/class-profile.php:113
+#: core/classes/class-profile.php:115
 msgid "Your dedicated mailbox's settings"
 msgstr ""
 
-#: core/classes/class-profile.php:123
+#: core/classes/class-profile.php:125
+msgid "Create a post from a web page"
+msgstr ""
+
+#: core/classes/class-profile.php:135
 msgid "Your incoming webhook settings"
 msgstr ""
 
-#: core/classes/class-profile.php:133
+#: core/classes/class-profile.php:145
 msgid "Your incoming message filter settings"
 msgstr ""
 
-#: core/classes/class-profile.php:143
+#: core/classes/class-profile.php:155
 msgid "Activity"
 msgstr ""
 
-#: core/classes/class-profile.php:188
-#: core/classes/class-profile.php:205
+#: core/classes/class-profile.php:200
+#: core/classes/class-profile.php:217
 msgid "--Choose--"
 msgstr ""
 
-#: core/classes/class-profile.php:191
-#: core/classes/class-profile.php:714
+#: core/classes/class-profile.php:203
+#: core/classes/class-profile.php:792
 msgid "Never (Disabled)"
 msgstr ""
 
-#: core/classes/class-profile.php:221
-#: core/classes/class-profile.php:712
+#: core/classes/class-profile.php:233
+#: core/classes/class-profile.php:790
 msgid "Check email"
 msgstr ""
 
-#: core/classes/class-profile.php:229
+#: core/classes/class-profile.php:241
 msgid "Email address"
 msgstr ""
 
-#: core/classes/class-profile.php:239
+#: core/classes/class-profile.php:251
 msgid "Username"
 msgstr ""
 
-#: core/classes/class-profile.php:249
-#: core/classes/class-profile.php:253
+#: core/classes/class-profile.php:261
+#: core/classes/class-profile.php:265
 msgid "Password"
 msgstr ""
 
-#: core/classes/class-profile.php:260
+#: core/classes/class-profile.php:272
 msgid "POP Server"
 msgstr ""
 
-#: core/classes/class-profile.php:264
+#: core/classes/class-profile.php:276
 msgid "POP3 server host name"
 msgstr ""
 
-#: core/classes/class-profile.php:269
+#: core/classes/class-profile.php:281
 msgid "Port"
 msgstr ""
 
-#: core/classes/class-profile.php:276
+#: core/classes/class-profile.php:288
 msgid "Connection"
 msgstr ""
 
-#: core/classes/class-profile.php:282
+#: core/classes/class-profile.php:294
 msgid "Use a secure connection (SSL)"
 msgstr ""
 
-#: core/classes/class-profile.php:288
+#: core/classes/class-profile.php:300
 msgid "Messages"
 msgstr ""
 
-#: core/classes/class-profile.php:293
+#: core/classes/class-profile.php:305
 msgid "Remove from POP server after posting"
 msgstr ""
 
-#: core/classes/class-profile.php:296
+#: core/classes/class-profile.php:308
 msgid "Leave on server (troubleshooting only)"
 msgstr ""
 
-#: core/classes/class-profile.php:311
+#: core/classes/class-profile.php:323
 msgid "Test"
 msgstr ""
 
-#: core/classes/class-profile.php:320
+#: core/classes/class-profile.php:332
 msgid "Connected"
 msgstr ""
 
-#: core/classes/class-profile.php:339
+#: core/classes/class-profile.php:351
 msgid "This mailbox access protocol is not supported"
 msgstr ""
 
-#: core/classes/class-profile.php:371
+#: core/classes/class-profile.php:383
 msgid "Allowed senders"
 msgstr ""
 
-#: core/classes/class-profile.php:377
+#: core/classes/class-profile.php:389
 msgid "Posts allowed from any sender"
 msgstr ""
 
-#: core/classes/class-profile.php:394
+#: core/classes/class-profile.php:406
 msgid "Ignore unsigned messages"
 msgstr ""
 
-#: core/classes/class-profile.php:519
+#: core/classes/class-profile.php:531
 msgid "Posting from webhook"
 msgstr ""
 
-#: core/classes/class-profile.php:524
+#: core/classes/class-profile.php:536
 msgid "Disabled"
 msgstr ""
 
-#: core/classes/class-profile.php:527
+#: core/classes/class-profile.php:539
 msgid "Enabled"
 msgstr ""
 
-#: core/classes/class-profile.php:599
+#: core/classes/class-profile.php:568
+#: core/classes/class-profile.php:594
+msgid "Post from URL"
+msgstr ""
+
+#: core/classes/class-profile.php:580
+msgid "Create Post"
+msgstr ""
+
+#: core/classes/class-profile.php:597
+msgid "Publish before posting from a URL."
+msgstr ""
+
+#: core/classes/class-profile.php:672
 msgid "This template retrieves posts from email."
 msgstr ""
 
-#: core/classes/class-profile.php:601
+#: core/classes/class-profile.php:674
 msgid "Create a template for each dedicated mailbox you use for posting."
 msgstr ""
 
-#: core/classes/class-profile.php:602
+#: core/classes/class-profile.php:675
 msgid "Posts created from email messages are assigned the template's attributes (visibility, categories, tags, and author)."
 msgstr ""
 
-#: core/classes/class-profile.php:603
+#: core/classes/class-profile.php:676
 msgid "Learn more by clicking each attributes's"
 msgstr ""
 
-#: core/classes/class-profile.php:605
+#: core/classes/class-profile.php:678
 msgid "icon."
 msgstr ""
 
-#: core/classes/class-profile.php:688
+#: core/classes/class-profile.php:766
 msgid "Mailbox Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:693
+#: core/classes/class-profile.php:771
 msgid "You can post to your site by sending messages to a dedicated email address."
 msgstr ""
 
-#: core/classes/class-profile.php:694
+#: core/classes/class-profile.php:772
 msgid "To do this you need a dedicated mailbox on a convenient email server."
 msgstr ""
 
-#: core/classes/class-profile.php:695
+#: core/classes/class-profile.php:773
 msgid "(Most hosting services let you create mailboxes.)"
 msgstr ""
 
-#: core/classes/class-profile.php:696
+#: core/classes/class-profile.php:774
 msgid "When you create that mailbox, the email provider gives you these settings."
 msgstr ""
 
-#: core/classes/class-profile.php:697
+#: core/classes/class-profile.php:775
 msgid "Enter them here."
 msgstr ""
 
-#: core/classes/class-profile.php:698
+#: core/classes/class-profile.php:776
 msgid "Then, your site will check email regularly, and create posts from the messages it finds."
 msgstr ""
 
-#: core/classes/class-profile.php:702
+#: core/classes/class-profile.php:780
 msgid "Put your dedicated mailbox's address on the distribution list for your listserv or email marketing service's distribution list."
 msgstr ""
 
-#: core/classes/class-profile.php:703
+#: core/classes/class-profile.php:781
 msgid "(Constant Contact and Mailchimp are popular marketing services.)"
 msgstr ""
 
-#: core/classes/class-profile.php:706
+#: core/classes/class-profile.php:784
 msgid "To retrieve posts from your email messages, enter the maibox's account settings here."
 msgstr ""
 
-#: core/classes/class-profile.php:707
+#: core/classes/class-profile.php:785
 msgid "Your retrieved posts inherit the categories, tags, and author you set for this template."
 msgstr ""
 
-#: core/classes/class-profile.php:710
+#: core/classes/class-profile.php:788
 msgid "If you use an email-to-webhook service, you don't need to provide mailbox account settings."
 msgstr ""
 
-#: core/classes/class-profile.php:713
+#: core/classes/class-profile.php:791
 msgid "to"
 msgstr ""
 
-#: core/classes/class-profile.php:720
+#: core/classes/class-profile.php:798
 msgid "On your site WP-Cron is disabled:  DISABLE_WP_CRON is set to true in your wp_config.php file."
 msgstr ""
 
-#: core/classes/class-profile.php:721
+#: core/classes/class-profile.php:799
 msgid "Be sure to schedule a System Cron Job to check your email."
 msgstr ""
 
-#: core/classes/class-profile.php:734
+#: core/classes/class-profile.php:817
 msgid "Message Filter Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:739
+#: core/classes/class-profile.php:822
 msgid "To only accept messages from certain senders, enter their email addresses, one per line, in the Allowed Senders box."
 msgstr ""
 
-#: core/classes/class-profile.php:740
+#: core/classes/class-profile.php:823
 msgid "If you receive messages from two different senders in one mailbox, and you want their posts to have different categories, tags, or authors, you can create two different templates like this one."
 msgstr ""
 
-#: core/classes/class-profile.php:741
+#: core/classes/class-profile.php:824
 msgid "Put just one sender's address in each template."
 msgstr ""
 
-#: core/classes/class-profile.php:742
+#: core/classes/class-profile.php:825
 msgid "If you do this you can apply a diferent template, with different categories and tags, to each sender."
 msgstr ""
 
-#: core/classes/class-profile.php:745
+#: core/classes/class-profile.php:828
 msgid "Many email services authenticate their messages by signing them."
 msgstr ""
 
-#: core/classes/class-profile.php:746
+#: core/classes/class-profile.php:829
 msgid "They use a standard known as DKIM to prove the messages came from them, and not some spammer."
 msgstr ""
 
-#: core/classes/class-profile.php:747
+#: core/classes/class-profile.php:830
 msgid "You can check Ignore messages to reject unsigned messages."
 msgstr ""
 
-#: core/classes/class-profile.php:756
+#: core/classes/class-profile.php:846
 msgid "Webhook settings"
 msgstr ""
 
-#: core/classes/class-profile.php:761
+#: core/classes/class-profile.php:851
 msgid "You can use an email-to-webhook service to deliver messages to your server."
 msgstr ""
 
-#: core/classes/class-profile.php:764
+#: core/classes/class-profile.php:854
 msgid "This is a good choice if your email provider blocks incoming messages from email marketing services like Constant Contact or Mailchimp."
 msgstr ""
 
-#: core/classes/class-profile.php:768
+#: core/classes/class-profile.php:858
 msgid "Configure your email-to-webhook service to POST incoming emails to this site using the webhook URL"
 msgstr ""
 
-#: core/classes/class-profile.php:776
+#: core/classes/class-profile.php:866
 msgid "PASSWORD"
 msgstr ""
 
-#: core/classes/class-profile.php:783
+#: core/classes/class-profile.php:873
 msgid "Give your username and password in the URL as shown."
 msgstr ""
 
 #. translators: 1 WordPress login name
-#: core/classes/class-profile.php:786
+#: core/classes/class-profile.php:876
 msgid "Use your username (%s) and"
 msgstr ""
 
-#: core/classes/class-profile.php:791
+#: core/classes/class-profile.php:881
 msgid "Remove the spaces from your application password before using it."
 msgstr ""
 
-#: core/classes/class-profile.php:800
+#: core/classes/class-profile.php:890
+msgid "Posting from a URL"
+msgstr ""
+
+#: core/classes/class-profile.php:895
+msgid "Many email marketing services offer a link in their messages saying \"View as Webpage."
+msgstr ""
+
+#: core/classes/class-profile.php:896
+msgid "You can create a post by pasting the URL from such a link here."
+msgstr ""
+
+#: core/classes/class-profile.php:905
 msgid "Publishing and Visibility Settings"
 msgstr ""
 
-#: core/classes/class-profile.php:805
+#: core/classes/class-profile.php:910
 msgid "To make this template active, and make it check for incoming email messages, Publish it."
 msgstr ""
 
-#: core/classes/class-profile.php:806
+#: core/classes/class-profile.php:911
 msgid "Draft and Pending Review templates are not active and do not check for messages."
 msgstr ""
 
-#: core/classes/class-profile.php:809
+#: core/classes/class-profile.php:914
 msgid "The template's Visibility affects the created posts. If the template is Public, the posts will be Public. If the template is Private, the posts will also be Private."
 msgstr ""
 
-#: core/classes/class-profile.php:818
+#: core/classes/class-profile.php:923
 msgid "Categories"
 msgstr ""
 
-#: core/classes/class-profile.php:823
+#: core/classes/class-profile.php:928
 msgid "The categories you choose here are applied to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:832
+#: core/classes/class-profile.php:937
 msgid "Tags"
 msgstr ""
 
-#: core/classes/class-profile.php:837
+#: core/classes/class-profile.php:942
 msgid "The tags you choose here are applied to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:846
+#: core/classes/class-profile.php:951
 msgid "Author Setting"
 msgstr ""
 
-#: core/classes/class-profile.php:851
+#: core/classes/class-profile.php:956
 msgid "The author you choose here is assigned to each created post."
 msgstr ""
 
-#: core/classes/class-profile.php:860
+#: core/classes/class-profile.php:965
 msgid "Post from Email activity"
 msgstr ""
 
-#: core/classes/class-profile.php:865
+#: core/classes/class-profile.php:970
 msgid "This shows posts recently created from email messages. It also shows ignored email messages and the reason for ignoring them."
 msgstr ""
 
-#: core/classes/class-profile.php:869
+#: core/classes/class-profile.php:974
 msgid " means a message was signed by the sender."
 msgstr ""
 
-#: core/classes/class-profile.php:873
+#: core/classes/class-profile.php:978
 msgid " means a message was not signed but still accepted."
 msgstr ""

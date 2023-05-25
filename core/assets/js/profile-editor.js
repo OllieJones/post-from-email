@@ -38,8 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const url = '/wp-json/post-from-email/v1/test-credentials'
     const test_button = document.querySelector('td.test_button > div > input#test')
+    const nonce_element = document.getElementById('credentialnonce')
+    const nonce = nonce_element ? nonce_element.value : ''
 
     /**
      * Fetch credentials[whatever] fields from inputs.
@@ -67,11 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (test_button) {
         test_button.addEventListener('click', async _ => {
+            const url = '/wp-json/post-from-email/v1/test-credentials'
             const credentials = get_credentials();
-            const nonce_element = document.getElementById('credentialnonce')
-            const nonce = nonce_element ? nonce_element.value : ''
             const body = JSON.stringify({...credentials})
-            const spinner = document.querySelector('td.test_button > div > span#credential-spinner.spinner');
+            const spinner = document.querySelector('td.test_button > div > span#credential_spinner.spinner');
             spinner && spinner.classList.add('is-active')
             const status_message = document.querySelector('#status_message')
             if (status_message) {
@@ -111,6 +111,60 @@ document.addEventListener('DOMContentLoaded', async () => {
                         status_message.classList.add('success')
                         status_message.classList.remove('failure', 'unknown')
                         status_message.textContent = message
+                    }
+                }
+            }
+        })
+    }
+    const urlpost_button = document.getElementById('urlpost_button')
+    if (urlpost_button) {
+        urlpost_button.addEventListener('click', async _ => {
+            const url = '/wp-json/post-from-email/v1/urlpost'
+            const urlpost_url = document.getElementById('urlpost_url');
+            const urlpost = (urlpost_url && 'string' === typeof urlpost_url.value) ? urlpost_url.value : '';
+            if (urlpost.length > 0) {
+                const body = JSON.stringify({url: urlpost, profile_id: urlpost_url.dataset.profile_id})
+                const spinner = document.getElementById('urlpost_spinner');
+                spinner && spinner.classList.add('is-active')
+                const status_message = document.getElementById('urlpost_message')
+                if (status_message) {
+                    status_message.classList.add('unknown')
+                    status_message.classList.remove('success', 'failure')
+                }
+                urlpost_button.disabled = true
+                const options = {
+                    method: 'POST',
+                    body: body,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': nonce
+                    },
+                    mode: 'same-origin',
+                    credentials: 'include',
+                    cache: 'no-cache',
+                    referrerPolicy: 'same-origin'
+                };
+                const req = new Request(url, options)
+                const res = await fetch(req)
+                urlpost_button.disabled = false
+                spinner && spinner.classList.remove('is-active')
+                if (res.status === 200) {
+                    const reply = await res.json();
+                    const status_message = document.querySelector('#status_message')
+                    if (status_message) {
+                        status_message.classList.remove('unknown')
+                        /* An error message contains newlines */
+                        if (!reply.startsWith('OK')) {
+                            status_message.classList.add('failure')
+                            status_message.classList.remove('success', 'unknown')
+                            status_message.innerHTML = reply
+                        } else {
+                            const message = reply.replace(/^OK\s*/, '')
+                            status_message.classList.add('success')
+                            status_message.classList.remove('failure', 'unknown')
+                            status_message.textContent = message
+                        }
                     }
                 }
             }

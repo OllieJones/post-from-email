@@ -195,7 +195,7 @@ final class Main {
       $args       = array( $profile->ID );
       $recurrence = $credentials['timing'];
       if ( ! wp_next_scheduled( self::CHECK_MAILBOXES_EVENT_HOOK, $args ) ) {
-        wp_schedule_event( time() + HOUR_IN_SECONDS, $recurrence, self::CHECK_MAILBOXES_EVENT_HOOK, $args );
+        wp_schedule_event( time() + MINUTE_IN_SECONDS, $recurrence, self::CHECK_MAILBOXES_EVENT_HOOK, $args );
       }
     }
   }

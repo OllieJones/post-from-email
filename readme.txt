@@ -1,13 +1,13 @@
 === Post from Email ===
 Author URI: https://github.com/OllieJones
-Plugin URI: https://github.com/OllieJones/post-from-email
+Plugin URI: https://www.plumislandmedia.net/post-from-email/
 Donate link: 
 Contributors:  Ollie Jones
 Tags: private
 Requires at least: 5.9
 Tested up to: 6.2
 Requires PHP: 7.4
-Stable tag: 0.3.5
+Stable tag: 0.3.6
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,8 +15,7 @@ Creates posts on your site from emails, including your own, and email blasts sen
 
 == Description ==
 
-Provides the [post-from-email src="url"] shortcode.
-
+Create posts from email messages.
 
 == Frequently Asked Questions ==
 
@@ -38,6 +37,9 @@ If you want to post emails when they're sent out, POST your them to the REST ser
 You can use the [CloudMailin](https://cloudmailin.com/) service to create a special-purpose email address. Then you can put that email address on your distribution list.
 
 == Changelog ==
+
+= 0.3.6: May 16, 2023
+Allow profile id in upload REST route.
 
 = 0.3.5: April 12, 2023
 Choice of email-check frequency.

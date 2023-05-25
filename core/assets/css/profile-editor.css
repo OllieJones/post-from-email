@@ -3,14 +3,15 @@ Backend related CSS
 -----------------*/
 
 /* make it look like Gmail's POP credentials box */
-div#credentials, div#filter, div#webhook, div#postlog {
+div#credentials, div#filter, div#webhook, div#postlog, div#urlbox {
     background-color: #fff7d7;
     border-color: #fad163;
 }
 div#credentials > div.postbox-header,
 div#filter > div.postbox-header,
 div#webhook > div.postbox-header,
-div#postlog > div.postbox-header
+div#postlog > div.postbox-header,
+div#urlbox > div.postbox-header
 {
     background-color: #fad163;
     border-color: #fad163;
@@ -37,11 +38,11 @@ table.credentials {
     width: fit-content;
 }
 
-table.credentials > tbody > tr > td:first-of-type {
+table > tbody > tr > td:first-of-type {
     text-align: right;
     width: fit-content;
 }
-table.credentials > tbody > tr > td.cred > input {
+table > tbody > tr > td.cred > input {
     width: 99%;
 }
 
