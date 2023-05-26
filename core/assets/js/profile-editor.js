@@ -12,22 +12,27 @@ document.addEventListener('DOMContentLoaded', () => {
     jQuery('div.dialog.popup.help-popup')
         .each(function (_) {
             if (this.dataset.target) {
-                const helpbox  = this
+                const helpbox = this
                 jQuery(`div#wpbody div.postbox-container div#${this.dataset.target} > div.postbox-header > h2`)
                     .each(function (_) {
-                        const width = Math.min (this.parentElement.offsetWidth, 800);
+                        const width = Math.min(this.parentElement.offsetWidth, 800);
                         this.classList.add('has-help-icon')
                         const link = document.createElement('div')
                         link.style.float = 'left'
                         link.classList.add('dashicons', 'dashicons-editor-help', 'help-icon')
                         const dialog_box = jQuery(helpbox).dialog({
-                            position: { my:'left bottom', collision:'flipfit flipfit', at:'left-5 top', of: this.parentElement},
+                            position: {
+                                my: 'left bottom',
+                                collision: 'flipfit flipfit',
+                                at: 'left-5 top',
+                                of: this.parentElement
+                            },
                             classes: {'ui-dialog': 'helpbox'},
                             autoOpen: false,
-                            width: width+1,
+                            width: width + 1,
                         })
                         helpbox.classList.remove('hidden')
-                        link.addEventListener('click', function(_) {
+                        link.addEventListener('click', function (_) {
                             if (dialog_box.dialog('isOpen')) dialog_box.dialog('close')
                             else dialog_box.dialog('open')
                         })
@@ -38,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const test_button = document.querySelector('td.test_button > div > input#test')
     const nonce_element = document.getElementById('credentialnonce')
     const nonce = nonce_element ? nonce_element.value : ''
 
@@ -66,9 +70,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return credentials
     }
 
+    const test_button = document.querySelector('td.test_button > div > input#test')
     if (test_button) {
         test_button.addEventListener('click', async _ => {
-            const url = '/wp-json/post-from-email/v1/test-credentials'
+            const endpoint = test_button.dataset.endpoint
             const credentials = get_credentials();
             const body = JSON.stringify({...credentials})
             const spinner = document.querySelector('td.test_button > div > span#credential_spinner.spinner');
@@ -92,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cache: 'no-cache',
                 referrerPolicy: 'same-origin'
             };
-            const req = new Request(url, options)
+            const req = new Request(endpoint, options)
             const res = await fetch(req)
             test_button.disabled = false
             spinner && spinner.classList.remove('is-active')
@@ -102,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (status_message) {
                     status_message.classList.remove('unknown')
                     /* An error message contains newlines */
-                    if (! reply.startsWith('OK')) {
+                    if (!reply.startsWith('OK')) {
                         status_message.classList.add('failure')
                         status_message.classList.remove('success', 'unknown')
                         status_message.innerHTML = reply
@@ -119,11 +124,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlpost_button = document.getElementById('urlpost_button')
     if (urlpost_button) {
         urlpost_button.addEventListener('click', async _ => {
-            const url = '/wp-json/post-from-email/v1/urlpost'
+            const endpoint = urlpost_button.dataset.endpoint
+            const profile_id = urlpost_button.dataset.profile_id
             const urlpost_url = document.getElementById('urlpost_url');
             const urlpost = (urlpost_url && 'string' === typeof urlpost_url.value) ? urlpost_url.value : '';
             if (urlpost.length > 0) {
-                const body = JSON.stringify({url: urlpost, profile_id: urlpost_url.dataset.profile_id})
+                const body = JSON.stringify({url: urlpost, profile_id: profile_id})
                 const spinner = document.getElementById('urlpost_spinner');
                 spinner && spinner.classList.add('is-active')
                 const status_message = document.getElementById('urlpost_message')
@@ -145,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     cache: 'no-cache',
                     referrerPolicy: 'same-origin'
                 };
-                const req = new Request(url, options)
+                const req = new Request(endpoint, options)
                 const res = await fetch(req)
                 urlpost_button.disabled = false
                 spinner && spinner.classList.remove('is-active')

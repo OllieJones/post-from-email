@@ -322,7 +322,9 @@ class Profile {
        <td class="test_button">
         <div>
          <span id="credential_spinner" class="spinner" style="float:none;"></span>
-         <input type="button" id="test" value="<?php esc_attr_e( 'Test', 'post-from-email' ) ?>">
+         <input type="button" id="test"
+                data-endpoint="<?php echo site_url( '/wp-json/post-from-email/v1/test-credentials' );?>"
+                value="<?php esc_attr_e( 'Test', 'post-from-email' ) ?>">
          <div class="clear"></div>
         </div>
        </td>
@@ -570,8 +572,7 @@ class Profile {
        <label for="urlpost_url"><?php esc_html_e( 'Post from URL', 'post-from-email' ) ?>:</label>
       </td>
       <td class="url">
-       <input type="url" id="urlpost_url" value="" size="40" placeholder="https://"
-              data-profile_id="<?php echo (int) $post->ID ?>">
+       <input type="url" id="urlpost_url" value="" size="40" placeholder="https://">
       </td>
      </tr>
 
@@ -579,7 +580,11 @@ class Profile {
       <td class="urlpost_button">
        <div>
         <span id="urlpost_spinner" class="spinner" style="float:none;"></span>
-        <input type="button" id="urlpost_button" value="<?php esc_attr_e( 'Create Post', 'post-from-email' ) ?>">
+        <input type="button"
+               id="urlpost_button"
+               data-endpoint="<?php echo site_url('/wp-json/post-from-email/v1/urlpost')?>"
+               data-profile_id="<?php echo (int) $post->ID ?>"
+               value="<?php esc_attr_e( 'Create Post', 'post-from-email' ) ?>">
         <div class="clear"></div>
        </div>
       </td>

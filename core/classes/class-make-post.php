@@ -180,10 +180,9 @@ class Make_Post {
         array_key_exists( 'headers', $this->upload ) && array_key_exists( 'date', $this->upload['headers'] )
           ? $this->upload['headers']['date']
           : 'now';
-      $post_date_local        = new DateTimeImmutable( $date, wp_timezone() );
+      $post_date_local        = ( new DateTimeImmutable( $date ) )->setTimezone( wp_timezone() );
       $post_date_local_string = $post_date_local->format( "Y-m-d\TH:i:s" );
-      $post_date_utc          = $post_date_local->setTimezone( new DateTimeZone( 'UTC' ) );
-      $post_date_utc_string   = $post_date_utc->format( "Y-m-d\TH:i:s" );
+      $post_date_utc_string   = $post_date_local->setTimezone( new DateTimeZone( 'UTC' ) )->format( "Y-m-d\TH:i:s" );
 
       if ( array_key_exists( 'plain', $this->upload ) ) {
         $excerpt = $this->upload['plain'];
