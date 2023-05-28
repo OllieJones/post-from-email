@@ -19,6 +19,11 @@ class Run {
 
   static $scrub_list;
 
+  /**
+   * @var int The current frame serial number.
+   */
+  private $frame_serial_number = 0;
+
   private $timeout = WEEK_IN_SECONDS * 2;
 
   /**
@@ -90,7 +95,9 @@ class Run {
 
     $file_url = esc_url( $this->get_file_url( $atts ) );
 
-    return "<iframe id='frame0' class='post-from-email' style='overflow: hidden; height: 100%;
+    $frameid = 'frame' . $this->frame_serial_number ++;
+
+    return "<iframe id='" . $frameid . "' class='post-from-email' style='overflow: hidden; height: 100%;
         width: 100%;' src='$file_url' ></iframe>";
   }
 
