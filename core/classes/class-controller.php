@@ -111,7 +111,7 @@ namespace Post_From_Email {
     }
 
     /**
-     * Handle mail-server request credential from browser.
+     * Handle url post request from server.
      *
      * @param WP_REST_Request $req
      *

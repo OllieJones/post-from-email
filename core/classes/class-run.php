@@ -2,6 +2,11 @@
 
 namespace Post_From_Email;
 // Exit if accessed directly.
+use DOMDocument;
+use DOMXPath;
+use Exception;
+use WP_Query;
+
 if ( ! defined( 'ABSPATH' ) ) {
   exit;
 }
@@ -140,59 +145,72 @@ class Run {
     }
     $path = empty( $atts['src'] )
       ? $this->load_meta_to_file( $atts, $name )
-      : $this->load_doc_to_file( $atts['src'], $name );
+      : $this->load_url_to_file( $atts['src'], $name );
     set_transient( POST_FROM_EMAIL_SLUG . '-file-' . $name, $path, $this->timeout );
 
     return $path;
   }
 
-  /**
-   * @throws \DOMException
-   */
-  private function load_doc_to_file( $url, $name ): string {
-    $doc = new \DOMDocument ( 1.0, 'utf-8' );
+  private function load_html_to_file( &$html, $name ) {
+    $internal_errors = libxml_use_internal_errors( true );
 
+    $doc                     = new DOMDocument ( 1.0, 'utf-8)' );
     $doc->preserveWhiteSpace = false;
-    $internal_errors         = libxml_use_internal_errors( true );
-    $doc->loadHTMLFile( $url );
+
+    $doc->loadHTML( $html );
     libxml_use_internal_errors( $internal_errors );
 
     $this->clean_doc( $doc );
+    $this->ingest_assets( $doc );
     $this->annotate_doc( $doc );
+    libxml_use_internal_errors( $internal_errors );
 
     return $this->write_sanitized_doc( $doc, $name );
+  }
+
+  /**
+   * @throws \DOMException
+   */
+  private function load_url_to_file( $url, $name ): string {
+
+    $response = cached_safe_remote_get( $url );
+    $code     = wp_remote_retrieve_response_code( $response );
+    $mesg     = null;
+    if ( 200 !== $code ) {
+      if ( is_wp_error( $response ) ) {
+        $mesg = $response->get_error_code() . ': ' . $response->get_error_message();
+      } else {
+        $mesg = $code . ': ' . wp_remote_retrieve_response_message( $response );
+      }
+    }
+    if ( $mesg ) {
+      throw new Exception( $mesg );
+    }
+
+    return $this->load_html_to_file( $response['body'], $name );
   }
 
   /**
    * @throws \DOMException
    */
   private function load_meta_to_file( $atts, $name ): string {
-    $doc = new \DOMDocument ( 1.0, 'utf-8)' );
+    $html = get_post_meta( get_the_ID(), $atts['meta_tag'], true );
 
-    $doc->preserveWhiteSpace = false;
-
-    $internal_errors = libxml_use_internal_errors( true );
-    $doc->loadHTML( get_post_meta( get_the_ID(), $atts['meta_tag'], true ) );
-    libxml_use_internal_errors( $internal_errors );
-
-    $this->clean_doc( $doc );
-    $this->annotate_doc( $doc );
-
-    return $this->write_sanitized_doc( $doc, $name );
+    return $this->load_html_to_file( $html, $name );
   }
 
   /**
    * Remove unnecessary parts of the document.
    *
-   * @param \DOMDocument $doc
+   * @param DOMDocument $doc
    *
    * @return void
    */
-  private function clean_doc( \DOMDocument &$doc, $scrub_list = null ) {
+  private function clean_doc( DOMDocument &$doc, $scrub_list = null ) {
     if ( null == $scrub_list ) {
       $scrub_list = self::$scrub_list;
     }
-    $xpath = new \DOMXPath( $doc );
+    $xpath = new DOMXPath( $doc );
     foreach ( $scrub_list as $scrub ) {
       try {
         $els = @$xpath->query( $scrub );
@@ -204,28 +222,105 @@ class Run {
             $el->parentNode->removeChild( $el );
           }
         }
-      } catch ( \Exception $ex ) {
+      } catch ( Exception $ex ) {
         error_log( 'Error in xpath expression ' . $scrub );
       }
     }
+
+    $els = @$xpath->query( '/html/body//img' );
+    foreach ( $els as $el ) {
+      /* Delete tiny images */
+      $w = $el->getAttribute( 'width' );
+      $h = $el->getAttribute( 'height' );
+      if ( strlen( $w ) > 0 && strlen( $h ) > 0 && ( $w * $h ) <= 16 ) {
+        $el->parentNode->removeChild( $el );
+      }
+    }
+  }
+
+  private function ingest_assets( DOMDocument &$doc ) {
+    $srcs  = array();
+    $xpath = new DOMXPath( $doc );
+    $els   = @$xpath->query( '/html/body//img' );
+    if ( false === $els ) {
+      error_log( 'Error in xpath looking for images' );
+    } else {
+      /* Locate the image URLs, and dedup them. */
+      foreach ( $els as $el ) {
+        $src          = $el->getAttribute( 'src' );
+        $srcs[ $src ] = true;
+      }
+      /* Ingest and cache the images. */
+      foreach ( $srcs as $src => $_ ) {
+        $local_url     = $this->ingest_attachment( $src );
+        $srcs [ $src ] = $local_url;
+      }
+      /* Update the html to refer to the local images. */
+      foreach ( $els as $el ) {
+        /* Delete tiny images */
+        $w = $el->getAttribute( 'width' );
+        $h = $el->getAttribute( 'height' );
+        if ( strlen( $w ) > 0 && strlen( $h ) > 0 && ( $w * $h ) <= 16 ) {
+          $el->parentNode->removeChild( $el );
+        } else {
+          $src = $el->getAttribute( 'src' );
+          if ( ! empty ( $srcs [ $src ] ) ) {
+            $el->setAttribute( 'src', $srcs[ $src ] );
+          }
+        }
+      }
+    }
+  }
+
+  private function ingest_attachment( $src ): string {
+    $local_url   = null;
+    $args        = array(
+      'post_type'           => 'attachment',
+      'meta_key'            => '_source_url',
+      'meta_value'          => $src,
+      'orderby'             => 'none',
+      'nopaging'            => true,
+      'ignore_sticky_posts' => true,
+      'is_singular'         => true,
+      'post_status'         => array( 'inherit', 'publish', 'private' ),
+    );
+    $query       = new WP_Query( $args );
+    $attachments = $query->get_posts();
+    foreach ( $attachments as $attachment ) {
+      $local_url = $attachment->guid;
+    }
+    wp_reset_postdata();
+
+    if ( null === $local_url ) {
+      /* Go sideload the image */
+      require_once( ABSPATH . 'wp-admin/includes/media.php' );
+      require_once( ABSPATH . 'wp-admin/includes/file.php' );
+      require_once( ABSPATH . 'wp-admin/includes/image.php' );
+      global $post;
+      $id         = media_sideload_image( $src, $post->ID, POST_FROM_EMAIL_SLUG . '_origin:' . $src, 'id' );
+      $attachment = get_post( $id );
+      $local_url  = $attachment->guid;
+    }
+
+    return $local_url;
   }
 
   /**
    * Adds necessary annotation to received email files to make them work in iframes.
    * An extra script is required to allow iframes to expand to the size of the framed page.
    *
-   * @param \DOMDocument $doc
+   * @param DOMDocument $doc
    *
    * @return void
    * @throws \DOMException
    */
-  private function annotate_doc( \DOMDocument &$doc ) {
+  private function annotate_doc( DOMDocument &$doc ) {
 
     /* append the iframeResizer content window tag. */
     $src = POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/js/iframeResizer.contentWindow.min.js';
     $tag = $doc->createElement( 'script' );
     $tag->setAttribute( 'src', $src );
-    $body = ( new \DOMXpath( $doc ) )->query( '/html/body' );
+    $body = ( new DOMXpath( $doc ) )->query( '/html/body' );
     if ( count( $body ) > 0 ) {
       $body[0]->appendChild( $tag );
     } else {
@@ -236,13 +331,13 @@ class Run {
   /**
    * Sanitize the document and write it to a file for iframe retrieval, creating the directory as needed.
    *
-   * @param \DOMDocument $doc The HTML document.
-   * @param string       $name The filename.
+   * @param DOMDocument $doc The HTML document.
+   * @param string      $name The filename.
    *
    * @return string The url of the file written.
    * @throws \DOMException
    */
-  private function write_sanitized_doc( \DOMDocument &$doc, $name ) {
+  private function write_sanitized_doc( DOMDocument &$doc, $name ) {
     $dirs    = wp_upload_dir();
     $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
     if ( ! @file_exists( $dirname ) ) {

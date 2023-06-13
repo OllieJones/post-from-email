@@ -187,6 +187,8 @@ final class Main {
   }
 
   private function schedule_mailbox_checks() {
+    require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/util.php';
+
     /* Handle polling mailboxes for new posts in cron */
     add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ), 10, 1 );
 

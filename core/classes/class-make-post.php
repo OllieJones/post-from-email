@@ -157,15 +157,15 @@ class Make_Post {
     $tags       = wp_list_pluck( get_the_terms( $this->profile, 'post_tag' ), 'term_id' );
 
     try {
-      $doc = new DOMDocument( '1.0', 'utf-8' );
-
-      $doc->preserveWhiteSpace = false;
-
       $html = mb_convert_encoding( $this->upload['html'], 'HTML-ENTITIES', "UTF-8" );
 
       /* A unique filename-safe (all lower case) tag for an email */
       $html_object_tag = base32_encode( md5( $html, true ) );
-      @$doc->loadHTML( $html, LIBXML_NOWARNING );
+      $internal_errors = libxml_use_internal_errors( true );
+      $doc = new DOMDocument( '1.0', 'utf-8' );
+      $doc->preserveWhiteSpace = false;
+      $doc->loadHTML( $html, LIBXML_NOWARNING );
+      libxml_use_internal_errors( $internal_errors );
 
       $title = $this->getElementContents( $doc, '/html/head/title', '' );
       if ( 0 === strlen( $title ) ) {
@@ -324,7 +324,7 @@ class Make_Post {
          && array_key_exists( 'allowlist', $this->credentials )
          && is_string( $this->credentials['allowlist'] )
          && strlen( $this->credentials['allowlist'] ) > 0 ) {
-      $allows = explode( "\n", Pop_Email::sanitize_email_list( $this->credentials['allowlist'] ) );
+      $allows = explode( "\n", sanitize_email_list( $this->credentials['allowlist'] ) );
 
       if ( $sender ) {
         foreach ( $allows as $allow ) {

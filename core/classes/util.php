@@ -9,7 +9,7 @@ use WP_Error;
  *
  * @return array
  */
-function get_template_credentials () {
+function get_template_credentials() {
   return array(
     'type'        => 'pop',
     'address'     => '',
@@ -42,7 +42,9 @@ function get_possible_ports( $credentials ) {
 }
 
 /**
- * Encode a string in base32
+ * Encode a string in base32.
+ *
+ * This string is suitable for a filename, cross-platform.
  *
  * @param string $data A string containing only hex digits: output of md5()
  *
@@ -193,7 +195,7 @@ function sanitize_username( $username ) {
  *
  * @return string The sanitized list.
  */
-function sanitize_email_list( $list ) {
+function sanitize_email_list( $list ): string {
   $result = array();
   $list   = is_string( $list ) ? $list : '';
   $list   = str_replace( "\n\r", "\n", $list );
