@@ -2,3 +2,5 @@
 /.run/
 *~
 **/hidden-test-treeshake/
+
+/vendor/

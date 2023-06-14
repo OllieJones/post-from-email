@@ -1,0 +1,19 @@
+{
+  "name": "olliejones/post-from-email",
+  "description": "WordPress plugin to create posts from email, especially email blasts.",
+  "type": "project",
+  "license": "GPLV2 or later",
+  "authors": [
+    {
+      "name": "OllieJones",
+      "email": "olliejones@gmail.com"
+    }
+  ],
+  "require": {
+    "wikimedia/less.php": "^4.1",
+    "ext-dom": "*",
+    "ext-libxml": "*",
+    "ext-mbstring": "*"
+  },
+  "autoload": {}
+}
