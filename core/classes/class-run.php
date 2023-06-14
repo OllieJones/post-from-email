@@ -89,29 +89,18 @@ class Run {
     $html = get_post_meta( get_the_ID(), $atts['meta_tag'], true );
     $doc  = $this->get_document_from_html( $html );
 
-    return $this->extract_body( $doc );
+    return wp_kses( $this->extract_body( $doc, false ), 'post' );
+  }
 
-    wp_enqueue_style( 'post-from-email',
-      POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/css/post-from-email.css',
-      [],
-      POST_FROM_EMAIL_VERSION );
-    wp_enqueue_script( 'iframe-resizer',
-      POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/js/iframeResizer.min.js',
-      [],
-      POST_FROM_EMAIL_VERSION,
-      false );
-    wp_enqueue_script( 'post-from-email',
-      POST_FROM_EMAIL_PLUGIN_URL . 'core/assets/js/post-from-email.js',
-      [],
-      POST_FROM_EMAIL_VERSION,
-      false );
-
-    $file_url = esc_url( $this->get_file_url( $atts ) );
-
-    $frameid = 'frame' . $this->frame_serial_number ++;
-
-    return "<iframe id='" . $frameid . "' class='post-from-email' style='overflow: hidden; height: 100%;
-        width: 100%;' src='$file_url' ></iframe>";
+  /**
+   * Converts a decimal number to a two-character hex number, for rgb() conversion.
+   *
+   * @param int $num
+   *
+   * @return false|string
+   */
+  private function dec_to_hex( $num ) {
+    return substr( str_pad( dechex( $num ), 2, "0", STR_PAD_LEFT ), 0, 2 );
   }
 
   /**
@@ -246,7 +235,7 @@ class Run {
   }
 
   /**
-   * Remove unnecessary parts of the document.
+   * Remove image tags that cover 16 pixels or less, probably surveillance beacons.
    *
    * @param DOMDocument $doc
    *
@@ -266,6 +255,28 @@ class Run {
   }
 
   /**
+   * Change inline styles containing color: rgb(x,y,z) to color: #xxyyzz.
+   *
+   * wp_kses, for unknown reasons, doesn't like rgb() colors. This changes them to # colors.
+   *
+   * @param DOMDocument $doc The document, mutated.
+   *
+   * @return void
+   */
+  private function replace_inline_rgb_in_doc( DOMDocument &$doc ) {
+    $xpath = new DOMXPath( $doc );
+    $els   = @$xpath->query( "//*[contains(@style, 'rgb(')]" );
+    foreach ( $els as $el ) {
+      $style = $el->getAttribute( 'style' );
+      $style = preg_replace_callback( '/(color: )*(rgb *\((\d+), *(\d+), *(\d+)\))( *?;)/',
+        function ( $m ) {
+          return $m[1] . '#' . $this->dec_to_hex( $m[3] ) . $this->dec_to_hex( $m[4] ) . $this->dec_to_hex( $m[5] ) . $m[6];
+        }, $style );
+      $el->setAttribute( 'style', $style );
+    }
+  }
+
+  /**
    * Ingest images (and other assets) from an HTML document, and updated the document to use local, ingested, copies.
    *
    * @param DOMDocument $doc HTML document to ingest.
@@ -273,27 +284,60 @@ class Run {
    * @return void
    */
   private function ingest_assets( DOMDocument &$doc ) {
-    $srcs  = array();
-    $xpath = new DOMXPath( $doc );
-    $els   = @$xpath->query( '/html/body//img' );
+    $attachment_ids = array();
+    $xpath          = new DOMXPath( $doc );
+    $els            = @$xpath->query( '/html/body//img' );
     if ( false === $els ) {
       error_log( 'Error in xpath looking for images' );
     } else {
       /* Locate the image URLs, and dedup them. */
       foreach ( $els as $el ) {
-        $src          = $el->getAttribute( 'src' );
-        $srcs[ $src ] = true;
+        $src                    = $el->getAttribute( 'src' );
+        $attachment_ids[ $src ] = true;
       }
       /* Ingest and cache the assets. */
-      foreach ( $srcs as $src => $_ ) {
-        $local_url     = $this->ingest_attachment( $src );
-        $srcs [ $src ] = $local_url;
+      foreach ( $attachment_ids as $src => $_ ) {
+        $id                      = $this->ingest_attachment( $src );
+        $attachment_ids [ $src ] = $id;
       }
       /* Update the html to refer to the local assets. */
       foreach ( $els as $el ) {
         $src = $el->getAttribute( 'src' );
-        if ( ! empty ( $srcs [ $src ] ) ) {
-          $el->setAttribute( 'src', $srcs[ $src ] );
+        if ( ! empty ( $attachment_ids [ $src ] ) ) {
+          $attachment_id = $attachment_ids [ $src ];
+          $metadata      = wp_get_attachment_metadata( $attachment_id );
+          $w             = $el->getAttribute( 'width' );
+          $h             = $el->getAttribute( 'height' );
+          $size          = null;
+          if ( 0 === strlen( $w ) && 0 === strlen( $h ) ) {
+            $size = 'medium';
+          } elseif ( 0 === strlen( $w ) ) {
+            $w = (int) round( $h * $metadata['width'] / $metadata['height'] );
+          } elseif ( 0 === strlen( $h ) ) {
+            $h = (int) round( $w * $metadata['height'] / $metadata['width'] );
+          } else {
+            $size = 'large';
+          }
+          if ( ! $size ) {
+            $sizes = $metadata['sizes'];
+            /* Sort the sizes in ascending order of width, then height. */
+            uasort( $sizes, function ( $a, $b ) {
+              if ( $a['width'] !== $b['width'] ) {
+                return min( 1, max( - 1, (int) $a['width'] - (int) $b['width'] ) );
+              }
+
+              return min( 1, max( - 1, (int) $a['height'] - (int) $b['height'] ) );
+            } );
+            foreach ( $sizes as $name => $s ) {
+              if ( $s['width'] < $w ) {
+                continue;
+              }
+              $size = $name;
+              break;
+            }
+          }
+          $sizeinfo = image_get_intermediate_size( $attachment_id, $size );
+          $el->setAttribute( 'src', $sizeinfo['url'] );
         }
       }
     }
@@ -307,7 +351,7 @@ class Run {
    * @return string URL of ingested copy on the local server.
    */
   private function ingest_attachment( string $url_to_ingest ): string {
-    $local_url   = null;
+    $id          = null;
     $args        = array(
       'post_type'           => 'attachment',
       'meta_key'            => '_source_url',
@@ -321,23 +365,21 @@ class Run {
     $query       = new WP_Query( $args );
     $attachments = $query->get_posts();
     foreach ( $attachments as $attachment ) {
-      $local_url = $attachment->guid;
+      $id = $attachment->ID;
     }
     wp_reset_postdata();
 
-    if ( null === $local_url ) {
+    if ( null === $id ) {
       /* Go sideload the image */
       require_once( ABSPATH . 'wp-admin/includes/media.php' );
       require_once( ABSPATH . 'wp-admin/includes/file.php' );
       require_once( ABSPATH . 'wp-admin/includes/image.php' );
       global $post;
-      $id         =
+      $id =
         media_sideload_image( $url_to_ingest, $post->ID, POST_FROM_EMAIL_SLUG . '_origin:' . $url_to_ingest, 'id' );
-      $attachment = get_post( $id );
-      $local_url  = $attachment->guid;
     }
 
-    return $local_url;
+    return $id;
   }
 
   /**
@@ -399,6 +441,7 @@ class Run {
     $doc->loadHTML( $html );
     $this->clean_doc( $doc );
     $this->remove_tiny_img_tags_from_doc( $doc );
+    $this->replace_inline_rgb_in_doc( $doc );
     $this->ingest_assets( $doc );
     libxml_use_internal_errors( $internal_errors );
 
@@ -427,23 +470,25 @@ div#post-from-email {
 LESSISMORE;
 
   /**
-   * Extract the <body> from a doc as a <div> with the embedded style sheets included.
+   * Extract the <body> from a doc as a <div>, optionally with the embedded style sheets included.
    *
    * @param DOMDocument $doc The document. It is mutated.
+   * @param bool        $insert_styles True to extract and re-embed style sheets.
    *
    * @return false|string The extracted HTML.
    * @throws DOMException
    * @throws Less_Exception_Parser
    */
-  private function extract_body( DOMDocument $doc ) {
-    require_once POST_FROM_EMAIL_PLUGIN_DIR . '/vendor/autoload.php';
-    $less_parser = new Less_Parser();
+  private function extract_body( DOMDocument $doc, bool $insert_styles = false ) {
+    if ( $insert_styles ) {
+      require_once POST_FROM_EMAIL_PLUGIN_DIR . '/vendor/autoload.php';
+      $less_parser = new Less_Parser();
+    }
 
     /* Fetch any style sheets, remove them, then scope-limit them with less */
     $search      = new DOMXPath( $doc );
     $els         = $search->query( '//style' );
-    $css = '';
-    /* Notice that we can't mutate the document while a Generator is in use on it. */
+    $css         = '';
     $stylesheets = array();
     foreach ( $els as $el ) {
       $css .= $el->nodeValue;
@@ -454,13 +499,20 @@ LESSISMORE;
     foreach ( $stylesheets as $stylesheet ) {
       $stylesheet->parentNode->removeChild( $stylesheet );
     }
-    unset ($stylesheets);
+    unset ( $stylesheets );
 
-    $less = self::less_wrapper . $css . '}';
-    $less_parser->parse( $less );
-    $css                = $less_parser->getCss();
-    $style              = $doc->createElement( 'style' );
-    $style->textContent = $css;
+    $style = null;
+    if ( $insert_styles ) {
+      try {
+        $less = self::less_wrapper . $css . '}';
+        $less_parser->parse( $less );
+        $css                = $less_parser->getCss();
+        $style              = $doc->createElement( 'style' );
+        $style->textContent = $css;
+      } catch ( Exception $e ) {
+        $style = null;
+      }
+    }
 
     /* Find the <body>. */
     $body = null;
@@ -469,8 +521,9 @@ LESSISMORE;
       $body = $el;
       break;
     }
-    /* Put in the changed style object. */
-    $body->insertBefore( $style, $body->firstChild );
+    if ( $style ) {
+      $body->insertBefore( $style, $body->firstChild );
+    }
 
     /* Create a <div> with the same attributes as the <body> */
     $attribute_nodes = array();
@@ -481,9 +534,11 @@ LESSISMORE;
     foreach ( $attribute_nodes as $attribute_node ) {
       $div->setAttributeNode( $attribute_node );
     }
-    unset ($attribute_nodes);
+    unset ( $attribute_nodes );
 
-    $div->setAttribute( 'id', 'post-from-email' );
+    if ( $insert_styles ) {
+      $div->setAttribute( 'id', 'post-from-email' );
+    }
 
     /* Move the body elements to the new <div> */
     $child_nodes = array();
@@ -496,6 +551,7 @@ LESSISMORE;
     unset ( $child_nodes );
 
     /* Extract the html from the newly populated <div> */
+
     return $doc->saveHTML( $div );
   }
 }
