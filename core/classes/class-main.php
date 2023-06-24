@@ -44,6 +44,10 @@ final class Main {
    * @var    Profile
    */
   public $profile;
+  /**
+   * @var Controller
+   */
+  private $rest;
 
   /**
    * Main Embed Instance.

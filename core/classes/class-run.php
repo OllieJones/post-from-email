@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class Post_From_Email_Run
  *
- * Thats where we bring the plugin to life
+ * Where we bring the plugin to life
  *
  * @package    POST_FROM_EMAIL
  * @subpackage  Classes/Post_From_Email_Run
@@ -26,11 +26,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Run {
 
   static $scrub_list;
-
-  /**
-   * @var int The current frame serial number.
-   */
-  private $frame_serial_number = 0;
 
   private $timeout = WEEK_IN_SECONDS * 2;
 
@@ -117,7 +112,7 @@ class Run {
   }
 
   /**
-   * Convert a url, or a filename of the form f-conta-cc-AbC123.html, to a file leaf name of that form.
+   * Convert a URL, or a filename of the form f-conta-cc-AbC123.html, to a file leaf name of that form.
    *
    * @param string $url
    *
@@ -212,7 +207,7 @@ class Run {
    *
    * @return void
    */
-  private function clean_doc( DOMDocument &$doc, $scrub_list = null ) {
+  private function clean_doc( DOMDocument $doc, $scrub_list = null ) {
     if ( null == $scrub_list ) {
       $scrub_list = self::$scrub_list;
     }
@@ -235,13 +230,13 @@ class Run {
   }
 
   /**
-   * Remove image tags that cover 16 pixels or less, probably surveillance beacons.
+   * Remove image tags that cover 16 pixels or fewer, probably surveillance beacons.
    *
    * @param DOMDocument $doc
    *
    * @return void
    */
-  private function remove_tiny_img_tags_from_doc( DOMDocument &$doc ) {
+  private function remove_tiny_img_tags_from_doc( DOMDocument $doc ) {
     $xpath = new DOMXPath( $doc );
     $els   = @$xpath->query( '/html/body//img' );
     foreach ( $els as $el ) {
@@ -263,7 +258,7 @@ class Run {
    *
    * @return void
    */
-  private function replace_inline_rgb_in_doc( DOMDocument &$doc ) {
+  private function replace_inline_rgb_in_doc( DOMDocument $doc ) {
     $xpath = new DOMXPath( $doc );
     $els   = @$xpath->query( "//*[contains(@style, 'rgb(')]" );
     foreach ( $els as $el ) {
@@ -283,7 +278,7 @@ class Run {
    *
    * @return void
    */
-  private function ingest_assets( DOMDocument &$doc ) {
+  private function ingest_assets( DOMDocument $doc ) {
     $attachment_ids = array();
     $xpath          = new DOMXPath( $doc );
     $els            = @$xpath->query( '/html/body//img' );
@@ -389,7 +384,7 @@ class Run {
    * @param DOMDocument $doc
    *
    * @return void
-   * @throws \DOMException
+   * @throws DOMException
    */
   private function put_iframeresizer_into_doc( DOMDocument $doc ) {
 
@@ -413,7 +408,7 @@ class Run {
    *
    * @return string The url of the file written.
    */
-  private function write_sanitized_doc( DOMDocument &$doc, string $filename ): string {
+  private function write_sanitized_doc( DOMDocument $doc, string $filename ): string {
     $dirs    = wp_upload_dir();
     $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
     if ( ! @file_exists( $dirname ) ) {
@@ -432,7 +427,7 @@ class Run {
    *
    * @return DOMDocument The created document.
    */
-  private function get_document_from_html( string &$html ): DOMDocument {
+  private function get_document_from_html( string $html ): DOMDocument {
     $internal_errors = libxml_use_internal_errors( true );
 
     $doc = new DOMDocument ( 1.0, 'utf-8' );

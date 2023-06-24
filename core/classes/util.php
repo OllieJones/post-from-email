@@ -177,7 +177,7 @@ function sanitize_hostname( $hostname ) {
  * @return string The same username, or '' if it contains invalid characters.
  */
 function sanitize_username( $username ) {
-  if ( false == strpos( $username, '@' ) ) {
+  if ( false === strpos( $username, '@' ) ) {
     if ( preg_match( '/^[a-zA-Z0-9][-.a-zA-Z0-9]*[a-zA-Z0-9]?/', $username ) ) {
       return $username;
     }
