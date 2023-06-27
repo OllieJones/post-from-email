@@ -131,7 +131,7 @@ namespace Post_From_Email {
      * @return bool
      *
      */
-    public static function check_dkim_signature_exists( $headers ): bool {
+    public static function check_dkim_signature_exists( $headers ) {
       return array_key_exists( 'dkim_signature', $headers );
     }
 
@@ -150,7 +150,7 @@ namespace Post_From_Email {
 
     /**
      * Encapsulate the WP_Query to get mailbox profiles.
-     * @return \Generator
+     * @return Generator
      */
     public static function get_active_mailboxes() {
       $args     = array(
@@ -333,9 +333,7 @@ namespace Post_From_Email {
 
       $mail = @imap_fetchstructure( $this->connection, $message_num );
 
-      $mail = $this->mail_get_parts( $message_num, $mail, 0 );
-
-      return $mail;
+      return $this->mail_get_parts( $message_num, $mail, 0 );
     }
 
     /**

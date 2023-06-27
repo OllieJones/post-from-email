@@ -39,7 +39,7 @@ namespace Post_From_Email {
      *
      * @param WP_REST_Request $req
      *
-     * @return WP_REST_Response|WP_Error
+     * @return WP_Error
      */
     public function post( WP_REST_Request $req ) {
       require_once ABSPATH . 'wp-admin/includes/admin.php';

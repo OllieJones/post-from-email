@@ -195,7 +195,7 @@ function sanitize_username( $username ) {
  *
  * @return string The sanitized list.
  */
-function sanitize_email_list( $list ): string {
+function sanitize_email_list( $list ) {
   $result = array();
   $list   = is_string( $list ) ? $list : '';
   $list   = str_replace( "\n\r", "\n", $list );

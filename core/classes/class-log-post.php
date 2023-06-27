@@ -95,7 +95,7 @@ namespace Post_From_Email {
      */
     public function store( $profile_id = null ) {
 
-      $profile_id = $profile_id ? $profile_id : $this->profile_id;
+      $profile_id = $profile_id ?: $this->profile_id;
 
       $log = get_post_meta( $profile_id, self::$log_meta, true );
       $log = is_array( $log ) ? $log : array();

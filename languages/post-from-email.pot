@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2.
 msgid ""
 msgstr ""
-"Project-Id-Version: Post from Email 0.5.0\n"
+"Project-Id-Version: Post from Email 0.5.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-from-email\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-06-14T07:49:51-04:00\n"
+"POT-Creation-Date: 2023-06-27T14:31:27-04:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.6.0\n"
 "X-Domain: post-from-email\n"
@@ -51,27 +51,27 @@ msgstr ""
 msgid "Post created."
 msgstr ""
 
-#: core/classes/class-main.php:160
+#: core/classes/class-main.php:163
 msgid "Twice Hourly"
 msgstr ""
 
-#: core/classes/class-main.php:162
+#: core/classes/class-main.php:165
 msgid "Every 2 Hours"
 msgstr ""
 
-#: core/classes/class-main.php:164
+#: core/classes/class-main.php:167
 msgid "Every 3 Hours"
 msgstr ""
 
-#: core/classes/class-main.php:166
+#: core/classes/class-main.php:169
 msgid "Every 4 Hours"
 msgstr ""
 
-#: core/classes/class-main.php:168
+#: core/classes/class-main.php:171
 msgid "Four Times Daily"
 msgstr ""
 
-#: core/classes/class-main.php:170
+#: core/classes/class-main.php:173
 msgid "Three Times Daily"
 msgstr ""
 
@@ -97,76 +97,76 @@ msgid "No new messages found when checking mailbox."
 msgstr ""
 
 #. translators: Explanation for the imap error 'No such host as example.com'
-#: core/classes/class-pop-email.php:472
+#: core/classes/class-pop-email.php:470
 msgid "Is your POP Server correct?"
 msgstr ""
 
 #. translators: Explanation for the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
-#: core/classes/class-pop-email.php:474
+#: core/classes/class-pop-email.php:472
 msgid "Should you use a secure connection? Is your Port correct?"
 msgstr ""
 
 #. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
-#: core/classes/class-pop-email.php:476
+#: core/classes/class-pop-email.php:474
 msgid "Is your Port correct? Is your POP Server correct?"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.'
-#: core/classes/class-pop-email.php:478
+#: core/classes/class-pop-email.php:476
 msgid "Are your Username and Password both correct?"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response'
-#: core/classes/class-pop-email.php:480
+#: core/classes/class-pop-email.php:478
 msgid "Your POP Server may be temporarily overloaded. Try again later."
 msgstr ""
 
-#: core/classes/class-pop-email.php:496
+#: core/classes/class-pop-email.php:494
 msgid "Connection failed"
 msgstr ""
 
 #. translators: For the imap error 'No such host as example.com'
-#: core/classes/class-pop-email.php:510
+#: core/classes/class-pop-email.php:508
 msgid "Mailbox is empty"
 msgstr ""
 
 #. translators: For the imap error 'No such host as example.com'
-#: core/classes/class-pop-email.php:512
+#: core/classes/class-pop-email.php:510
 msgid "No such host as"
 msgstr ""
 
 #. translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
-#: core/classes/class-pop-email.php:514
+#: core/classes/class-pop-email.php:512
 msgid "TLS/SSL failure for"
 msgstr ""
 
 #. translators: For the imap error 'TLS/SSL failure for mail.example.com: SSL negotiation failed'
-#: core/classes/class-pop-email.php:516
+#: core/classes/class-pop-email.php:514
 msgid "SSL negotiation failed"
 msgstr ""
 
 #. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
-#: core/classes/class-pop-email.php:518
+#: core/classes/class-pop-email.php:516
 msgid "Cannot connect to"
 msgstr ""
 
 #. translators: For the imap error 'Can't connect to example.com,1110: Connection timed out'
-#: core/classes/class-pop-email.php:520
+#: core/classes/class-pop-email.php:518
 msgid "Connection timed out"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.'
-#: core/classes/class-pop-email.php:522
+#: core/classes/class-pop-email.php:520
 msgid "Can not authenticate to POP3 server"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: [AUTH] Authentication failed.'
-#: core/classes/class-pop-email.php:524
+#: core/classes/class-pop-email.php:522
 msgid "Authentication failed"
 msgstr ""
 
 #. translators: For the imap error 'Can not authenticate to POP3 server: POP3 connection broken in response'
-#: core/classes/class-pop-email.php:526
+#: core/classes/class-pop-email.php:524
 msgid "POP3 connection broken in response"
 msgstr ""
 

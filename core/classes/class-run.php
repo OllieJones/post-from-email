@@ -57,7 +57,7 @@ class Run {
    *
    * @return string the date string we generate. It must end with a space for correct formatting.
    */
-  public function post_date_and_time( string $date ) {
+  public function post_date_and_time( $date ) {
 
     $isodate  = esc_attr( get_the_date( 'c' ) );
     $textdate = esc_html( get_the_date() . ' ' . get_the_time() );
@@ -79,7 +79,7 @@ class Run {
    *
    * @return string Shortcode output.
    */
-  public function embed( array $atts = [], string $content = null, string $tag = '' ) {
+  public function embed( array $atts = [], $content = null, $tag = '' ) {
 
     $html = get_post_meta( get_the_ID(), $atts['meta_tag'], true );
     $doc  = $this->get_document_from_html( $html );
@@ -123,12 +123,11 @@ class Run {
       return $url;
     }
     $parsed = wp_parse_url( $url );
-    $file   = 'f-' . sanitize_key( $parsed['PHP_URL_HOST'] . '-' . $parsed['PHP_URL_PATH'] ) . '.html';
 
-    return $file;
+    return 'f-' . sanitize_key( $parsed['PHP_URL_HOST'] . '-' . $parsed['PHP_URL_PATH'] ) . '.html';
   }
 
-  private function get_file_url( $atts ): string {
+  private function get_file_url( $atts ) {
     $name = empty( $atts['src'] ) ? POST_FROM_EMAIL_SLUG . get_the_ID() . '.html' : $this->get_filename( $atts['src'] );
     $path = get_transient( POST_FROM_EMAIL_SLUG . '-file-' . $name );
     if ( $path ) {
@@ -151,7 +150,7 @@ class Run {
    * @return string URL of local cached file.
    * @throws DOMException
    */
-  private function load_html_to_iframeable_file( &$html, $name ): string {
+  private function load_html_to_iframeable_file( $html, $name ) {
     $doc = $this->get_document_from_html( $html );
     /* Put on the iframeResizer js resizing. */
     $this->put_iframeresizer_into_doc( $doc );
@@ -168,7 +167,7 @@ class Run {
    * @return string URL of local cached file.
    * @throws DOMException
    */
-  private function load_url_to_iframeable_file( $url, $filename ): string {
+  private function load_url_to_iframeable_file( $url, $filename ) {
 
     $response = cached_safe_remote_get( $url );
     $code     = wp_remote_retrieve_response_code( $response );
@@ -194,7 +193,7 @@ class Run {
    * @return string URL of local cached file.
    * @throws DOMException
    */
-  private function load_meta_to_iframeable_file( $atts, $filename ): string {
+  private function load_meta_to_iframeable_file( $atts, $filename ) {
     $html = get_post_meta( get_the_ID(), $atts['meta_tag'], true );
 
     return $this->load_html_to_iframeable_file( $html, $filename );
@@ -204,6 +203,7 @@ class Run {
    * Remove unnecessary parts of the document.
    *
    * @param DOMDocument $doc
+   * @param string|null $scrub_list Array of xpath search terms to remove.
    *
    * @return void
    */
@@ -281,13 +281,13 @@ class Run {
   private function ingest_assets( DOMDocument $doc ) {
     $attachment_ids = array();
     $xpath          = new DOMXPath( $doc );
-    $els            = @$xpath->query( '/html/body//img' );
-    if ( false === $els ) {
+    $image_elements = @$xpath->query( '/html/body//img' );
+    if ( false === $image_elements ) {
       error_log( 'Error in xpath looking for images' );
     } else {
       /* Locate the image URLs, and dedup them. */
-      foreach ( $els as $el ) {
-        $src                    = $el->getAttribute( 'src' );
+      foreach ( $image_elements as $image_element ) {
+        $src                    = $image_element->getAttribute( 'src' );
         $attachment_ids[ $src ] = true;
       }
       /* Ingest and cache the assets. */
@@ -296,20 +296,20 @@ class Run {
         $attachment_ids [ $src ] = $id;
       }
       /* Update the html to refer to the local assets. */
-      foreach ( $els as $el ) {
-        $src = $el->getAttribute( 'src' );
+      foreach ( $image_elements as $image_element ) {
+        $src = $image_element->getAttribute( 'src' );
         if ( ! empty ( $attachment_ids [ $src ] ) ) {
           $attachment_id = $attachment_ids [ $src ];
           $metadata      = wp_get_attachment_metadata( $attachment_id );
-          $w             = $el->getAttribute( 'width' );
-          $h             = $el->getAttribute( 'height' );
+          $w             = $image_element->getAttribute( 'width' );
+          $h             = $image_element->getAttribute( 'height' );
           $size          = null;
           if ( 0 === strlen( $w ) && 0 === strlen( $h ) ) {
             $size = 'medium';
           } elseif ( 0 === strlen( $w ) ) {
             $w = (int) round( $h * $metadata['width'] / $metadata['height'] );
           } elseif ( 0 === strlen( $h ) ) {
-            $h = (int) round( $w * $metadata['height'] / $metadata['width'] );
+            /* Empty, intentionally. */
           } else {
             $size = 'large';
           }
@@ -332,7 +332,7 @@ class Run {
             }
           }
           $sizeinfo = image_get_intermediate_size( $attachment_id, $size );
-          $el->setAttribute( 'src', $sizeinfo['url'] );
+          $image_element->setAttribute( 'src', $sizeinfo['url'] );
         }
       }
     }
@@ -345,7 +345,7 @@ class Run {
    *
    * @return string URL of ingested copy on the local server.
    */
-  private function ingest_attachment( string $url_to_ingest ): string {
+  private function ingest_attachment( $url_to_ingest ) {
     $id          = null;
     $args        = array(
       'post_type'           => 'attachment',
@@ -408,7 +408,7 @@ class Run {
    *
    * @return string The url of the file written.
    */
-  private function write_sanitized_doc( DOMDocument $doc, string $filename ): string {
+  private function write_sanitized_doc( DOMDocument $doc, $filename ) {
     $dirs    = wp_upload_dir();
     $dirname = $dirs['basedir'] . DIRECTORY_SEPARATOR . POST_FROM_EMAIL_SLUG;
     if ( ! @file_exists( $dirname ) ) {
@@ -427,7 +427,7 @@ class Run {
    *
    * @return DOMDocument The created document.
    */
-  private function get_document_from_html( string $html ): DOMDocument {
+  private function get_document_from_html( $html ) {
     $internal_errors = libxml_use_internal_errors( true );
 
     $doc = new DOMDocument ( 1.0, 'utf-8' );
@@ -474,7 +474,7 @@ LESSISMORE;
    * @throws DOMException
    * @throws Less_Exception_Parser
    */
-  private function extract_body( DOMDocument $doc, bool $insert_styles = false ) {
+  private function extract_body( DOMDocument $doc, $insert_styles = false ) {
     if ( $insert_styles ) {
       require_once POST_FROM_EMAIL_PLUGIN_DIR . '/vendor/autoload.php';
       $less_parser = new Less_Parser();

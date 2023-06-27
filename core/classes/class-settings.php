@@ -10,7 +10,7 @@ namespace Post_From_Email {
 	/**
 	 * HELPER COMMENT START
 	 *
-	 * This class contains all of the plugin related settings.
+	 * This class contains all the plugin related settings.
 	 * Everything that is relevant data and used multiple times throughout
 	 * the plugin.
 	 *
@@ -28,7 +28,7 @@ namespace Post_From_Email {
 	/**
 	 * Class Post_From_Email_Settings
 	 *
-	 * This class contains all of the plugin settings.
+	 * This class contains all the plugin settings.
 	 * Here you can configure the whole plugin data.
 	 *
 	 * @package    POST_FROM_EMAIL

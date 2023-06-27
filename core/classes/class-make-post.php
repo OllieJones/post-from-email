@@ -317,7 +317,7 @@ class Make_Post {
    *
    * @return bool True if the message should be allowed
    */
-  private function sender_in_allowlist( string $sender ): bool {
+  private function sender_in_allowlist( $sender ) {
     $allowed                 = false;
     $this->log_item->allowed = 0;
     if ( is_array( $this->credentials )

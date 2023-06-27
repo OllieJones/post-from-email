@@ -4,7 +4,6 @@ namespace Post_From_Email;
 
 // Exit if accessed directly.
 use WP_Post;
-use WP_Query;
 
 if ( ! defined( 'ABSPATH' ) ) {
   exit;
@@ -194,7 +193,7 @@ final class Main {
     require_once POST_FROM_EMAIL_PLUGIN_DIR . '/core/classes/util.php';
 
     /* Handle polling mailboxes for new posts in cron */
-    add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ), 10, 1 );
+    add_action( self::CHECK_MAILBOXES_EVENT_HOOK, array( $this, 'check_mailboxes' ) );
 
     foreach ( Pop_Email::get_active_mailboxes() as $profile => $credentials ) {
       /** @var WP_POST $profile */

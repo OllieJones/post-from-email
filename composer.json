@@ -13,7 +13,10 @@
     "wikimedia/less.php": "^4.1",
     "ext-dom": "*",
     "ext-libxml": "*",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "ext-json": "*",
+    "ext-imap": "*",
+    "ext-http": "*"
   },
   "autoload": {}
 }

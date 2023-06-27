@@ -750,12 +750,12 @@ class Profile {
    */
   private function get_url( $parsed_url ) {
     $scheme   = isset( $parsed_url['scheme'] ) ? $parsed_url['scheme'] . '://' : '';
-    $host     = $parsed_url['host'] ?? '';
+    $host     = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
     $port     = isset( $parsed_url['port'] ) ? ':' . $parsed_url['port'] : '';
-    $user     = $parsed_url['user'] ?? '';
+    $user     = isset( $parsed_url['user'] ) ? $parsed_url['user'] : '';
     $pass     = isset( $parsed_url['pass'] ) ? ':' . $parsed_url['pass'] : '';
     $pass     = ( $user || $pass ) ? "$pass@" : '';
-    $path     = $parsed_url['path'] ?? '';
+    $path     = isset( $parsed_url['path'] ) ? $parsed_url['path'] : '';
     $query    = isset( $parsed_url['query'] ) ? '?' . $parsed_url['query'] : '';
     $fragment = isset( $parsed_url['fragment'] ) ? '#' . $parsed_url['fragment'] : '';
 
@@ -995,7 +995,7 @@ class Profile {
    *
    * @return array Credentials array.
    */
-  private function get_credentials( WP_Post $post ): array {
+  private function get_credentials( $post ) {
     $credentials = get_post_meta( $post->ID, POST_FROM_EMAIL_SLUG . '_credentials', true );
     if ( ! is_array( $credentials ) ) {
       $credentials = get_template_credentials();
