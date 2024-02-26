@@ -156,6 +156,9 @@ function sanitize_credentials( $credentials ) {
  * @return string|null The same hostname, or null if it contains invalid characters.
  */
 function sanitize_hostname( $hostname ) {
+  if ( ! is_string( $hostname ) || ( 0 === strlen( $hostname ) ) ) {
+    return '';
+  }
   $splits = explode( '.', $hostname );
   $result = array();
   foreach ( $splits as $split ) {
@@ -177,6 +180,9 @@ function sanitize_hostname( $hostname ) {
  * @return string The same username, or '' if it contains invalid characters.
  */
 function sanitize_username( $username ) {
+  if ( ! is_string( $username ) ) {
+    return '';
+  }
   if ( false === strpos( $username, '@' ) ) {
     if ( preg_match( '/^[a-zA-Z0-9][-.a-zA-Z0-9]*[a-zA-Z0-9]?/', $username ) ) {
       return $username;
