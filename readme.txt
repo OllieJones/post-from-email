@@ -5,7 +5,7 @@ Donate link:
 Contributors:  Ollie Jones
 Tags: private
 Requires at least: 5.9
-Tested up to: 6.2.2
+Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 0.5.1
 License: GPLv2
