@@ -80,7 +80,7 @@ final class Main {
       register_activation_hook( POST_FROM_EMAIL_PLUGIN_FILE, array( self::$instance, 'on_activation' ) );
       register_deactivation_hook( POST_FROM_EMAIL_PLUGIN_FILE, array( self::$instance, 'unschedule_hooks' ) );
     }
-    add_action( 'plugins_loaded', [ self::$instance, 'cronjobs' ] );
+    add_action( 'init', [ self::$instance, 'cronjobs' ] );
 
     return self::$instance;
   }

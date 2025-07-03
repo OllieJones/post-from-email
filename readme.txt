@@ -5,9 +5,9 @@ Donate link:
 Contributors:  Ollie Jones
 Tags: private
 Requires at least: 5.9
-Tested up to: 6.7
+Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ If you want to post emails when they're sent out, POST your them to the REST ser
 You can use the [CloudMailin](https://cloudmailin.com/) service to create a special-purpose email address. Then you can put that email address on your distribution list.
 
 == Changelog ==
+
+= 0.5.2: July 3, 2025
+Fix a couple of deprecations.
 
 = 0.5.1: June 14, 2023
 Ingest images to media library, show html directly rather than in iframes, php8 compatibility.
