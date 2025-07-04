@@ -147,7 +147,7 @@ final class Main {
    * @return void
    */
   public function cronjobs() {
-    add_action( 'plugins_loaded', [ self::$instance, 'load_textdomain' ] );
+    add_action( 'init', [ self::$instance, 'load_textdomain' ] );
     add_filter( 'cron_schedules', [ self::$instance, 'more_schedules' ] );
     /* Handle the cleanup of the html cache in cron. */
     add_action( self::CLEAN_EVENT_HOOK, array( $this, 'clean_cache_directory' ), 10, 0 );
