@@ -73,9 +73,9 @@ class Run {
    *
    * Renders an embedded HTML email
    *
-   * @param array       $atts Shortcode attributes. Default empty.
+   * @param array $atts Shortcode attributes. Default empty.
    * @param string|null $content Shortcode content. Default null.
-   * @param string      $tag Shortcode tag (name). Default empty.
+   * @param string $tag Shortcode tag (name). Default empty.
    *
    * @return string Shortcode output.
    */
@@ -187,7 +187,7 @@ class Run {
   }
 
   /**
-   * @param array  $atts Attributes for a shortcode renderer.
+   * @param array $atts Attributes for a shortcode renderer.
    * @param string $filename Filename to use in local file system.
    *
    * @return string URL of local cached file.
@@ -332,7 +332,9 @@ class Run {
             }
           }
           $sizeinfo = image_get_intermediate_size( $attachment_id, $size );
-          $image_element->setAttribute( 'src', $sizeinfo['url'] );
+          if ( is_array( $sizeinfo ) && array_key_exists( 'url', $sizeinfo ) ) {
+            $image_element->setAttribute( 'src', $sizeinfo['url'] );
+          }
         }
       }
     }
@@ -404,7 +406,7 @@ class Run {
    * Sanitize the document and write it to a file for iframe retrieval, creating the directory as needed.
    *
    * @param DOMDocument $doc The HTML document.
-   * @param string      $filename The filename in the local file system.
+   * @param string $filename The filename in the local file system.
    *
    * @return string The url of the file written.
    */
@@ -429,15 +431,20 @@ class Run {
    */
   private function get_document_from_html( $html ) {
     $internal_errors = libxml_use_internal_errors( true );
-
-    $doc = new DOMDocument ( 1.0, 'utf-8' );
+    $doc             = new DOMDocument ( 1.0, 'utf-8' );
 
     $doc->preserveWhiteSpace = false;
-    $doc->loadHTML( $html );
-    $this->clean_doc( $doc );
-    $this->remove_tiny_img_tags_from_doc( $doc );
-    $this->replace_inline_rgb_in_doc( $doc );
-    $this->ingest_assets( $doc );
+    if ( is_string( $html ) && strlen( $html ) > 0 ) {
+      try {
+        $doc->loadHTML( $html );
+        $this->clean_doc( $doc );
+        $this->remove_tiny_img_tags_from_doc( $doc );
+        $this->replace_inline_rgb_in_doc( $doc );
+        $this->ingest_assets( $doc );
+      } catch ( Exception $e ) {
+        $doc = new DOMDocument ( 1.0, 'utf-8' );
+      }
+    }
     libxml_use_internal_errors( $internal_errors );
 
     return $doc;
@@ -468,7 +475,7 @@ LESSISMORE;
    * Extract the <body> from a doc as a <div>, optionally with the embedded style sheets included.
    *
    * @param DOMDocument $doc The document. It is mutated.
-   * @param bool        $insert_styles True to extract and re-embed style sheets.
+   * @param bool $insert_styles True to extract and re-embed style sheets.
    *
    * @return false|string The extracted HTML.
    * @throws DOMException
