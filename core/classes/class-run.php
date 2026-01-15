@@ -309,12 +309,13 @@ class Run {
           } elseif ( 0 === strlen( $w ) ) {
             $w = (int) round( $h * $metadata['width'] / $metadata['height'] );
           } elseif ( 0 === strlen( $h ) ) {
-            /* Empty, intentionally. */
+            $size = 'medium';
           } else {
             $size = 'large';
           }
           if ( ! $size ) {
             $sizes = $metadata['sizes'];
+            $sizes = is_array( $sizes ) ? $sizes : array();
             /* Sort the sizes in ascending order of width, then height. */
             uasort( $sizes, function ( $a, $b ) {
               if ( $a['width'] !== $b['width'] ) {
