@@ -6,6 +6,7 @@ use DOMDocument;
 use DOMException;
 use DOMXPath;
 use Exception;
+use WP_Error;
 use WP_Query;
 use Less_Parser;
 use Less_Exception_Parser;
@@ -82,9 +83,13 @@ class Run {
   public function embed( array $atts = [], $content = null, $tag = '' ) {
 
     $html = get_post_meta( get_the_ID(), $atts['meta_tag'], true );
-    $doc  = $this->get_document_from_html( $html );
+    if ( $html && is_string($html) && strlen ($html) > 0 ) {
+      $doc = $this->get_document_from_html( $html );
 
-    return wp_kses( $this->extract_body( $doc, false ), 'post' );
+      return wp_kses( $this->extract_body( $doc, false ), 'post' );
+    } else {
+      return '';
+    }
   }
 
   /**
@@ -293,48 +298,22 @@ class Run {
       /* Ingest and cache the assets. */
       foreach ( $attachment_ids as $src => $_ ) {
         $id                      = $this->ingest_attachment( $src );
-        $attachment_ids [ $src ] = $id;
+        /* The returned $id  might be a WP_Error. */
+        $attachment_ids[ $src ] = is_integer ( $id ) ? $id : false;
       }
       /* Update the html to refer to the local assets. */
       foreach ( $image_elements as $image_element ) {
         $src = $image_element->getAttribute( 'src' );
-        if ( ! empty ( $attachment_ids [ $src ] ) ) {
+        if ( ! empty( $attachment_ids [ $src ] ) ) {
           $attachment_id = $attachment_ids [ $src ];
-          $metadata      = wp_get_attachment_metadata( $attachment_id );
-          $w             = $image_element->getAttribute( 'width' );
-          $h             = $image_element->getAttribute( 'height' );
-          $size          = null;
-          if ( 0 === strlen( $w ) && 0 === strlen( $h ) ) {
-            $size = 'medium';
-          } elseif ( 0 === strlen( $w ) ) {
-            $w = (int) round( $h * $metadata['width'] / $metadata['height'] );
-          } elseif ( 0 === strlen( $h ) ) {
-            $size = 'medium';
+          if ( is_integer( $attachment_id ) ) {
+            $url = wp_get_attachment_url( $attachment_id );
+            $image_element->setAttribute( 'src', $url );
           } else {
-            $size = 'large';
-          }
-          if ( ! $size ) {
-            $sizes = $metadata['sizes'];
-            $sizes = is_array( $sizes ) ? $sizes : array();
-            /* Sort the sizes in ascending order of width, then height. */
-            uasort( $sizes, function ( $a, $b ) {
-              if ( $a['width'] !== $b['width'] ) {
-                return min( 1, max( - 1, (int) $a['width'] - (int) $b['width'] ) );
-              }
-
-              return min( 1, max( - 1, (int) $a['height'] - (int) $b['height'] ) );
-            } );
-            foreach ( $sizes as $name => $s ) {
-              if ( $s['width'] < $w ) {
-                continue;
-              }
-              $size = $name;
-              break;
-            }
-          }
-          $sizeinfo = image_get_intermediate_size( $attachment_id, $size );
-          if ( is_array( $sizeinfo ) && array_key_exists( 'url', $sizeinfo ) ) {
-            $image_element->setAttribute( 'src', $sizeinfo['url'] );
+            /* Notice that ->ingest_attachment can return a WP_Error.
+             * If that happens, we will simply remove the img tag from the
+             * incoming email-blast  HTML message.        */
+            $image_element->remove();
           }
         }
       }
@@ -346,7 +325,7 @@ class Run {
    *
    * @param string $url_to_ingest URL of the object (image, usually) to ingest.
    *
-   * @return string URL of ingested copy on the local server.
+   * @return string|WP_Error URL of ingested copy on the local server.
    */
   private function ingest_attachment( $url_to_ingest ) {
     $id          = null;
@@ -530,8 +509,10 @@ LESSISMORE;
 
     /* Create a <div> with the same attributes as the <body> */
     $attribute_nodes = array();
-    foreach ( $body->attributes as $attribute ) {
-      $attribute_nodes [] = $body->getAttributeNode( $attribute->name );
+    if ( $body && is_array( $body->attributes )) {
+      foreach ( $body->attributes as $attribute ) {
+        $attribute_nodes [] = $body->getAttributeNode( $attribute->name );
+      }
     }
     $div = $doc->createElement( 'div' );
     foreach ( $attribute_nodes as $attribute_node ) {
@@ -545,8 +526,10 @@ LESSISMORE;
 
     /* Move the body elements to the new <div> */
     $child_nodes = array();
-    foreach ( $body->childNodes as $child_node ) {
-      $child_nodes [] = $child_node;
+    if ( $body && $body->childNodes ) {
+      foreach ( $body->childNodes as $child_node ) {
+        $child_nodes [] = $child_node;
+      }
     }
     foreach ( $child_nodes as $child_node ) {
       $div->appendChild( $child_node );
